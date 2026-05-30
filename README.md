@@ -7,11 +7,7 @@ Android와 Kotlin을 중심으로 모바일 앱 개발을 공부하고 있습니
 
 ### Main
 
-![Kotlin](https://img.shields.io/badge/Kotlin-7F52FF?style=flat-square&logo=kotlin&logoColor=white)
-![Android](https://img.shields.io/badge/Android-3DDC84?style=flat-square&logo=android&logoColor=white)
-![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-4285F4?style=flat-square&logo=jetpackcompose&logoColor=white)
-
-`Coroutines / Flow`
+`Kotlin` · `Android` · `Jetpack Compose` · `Coroutines / Flow`
 
 ### Architecture
 
