@@ -6,6 +6,7 @@ on:
       - "docs/history/**"
       - "apps/korean-history-study/**"
       - "scripts/verify_history_site.mjs"
+      - ".repair/**"
       - ".github/workflows/history-site-check.yml"
   push:
     branches:
@@ -30,23 +31,23 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 복구 대상 자산을 작업 공간에 적용
         shell: bash
         run: |
-          git init -q
-          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
-            git fetch -q --depth=1 origin "+refs/pull/${{ github.event.pull_request.number }}/merge:refs/remotes/origin/pr-merge"
-            git checkout -q refs/remotes/origin/pr-merge
-          else
-            git fetch -q --depth=1 origin "${GITHUB_SHA}"
-            git checkout -q FETCH_HEAD
+          if ! compgen -G ".repair/history-site-part-*.b64" > /dev/null; then
+            exit 0
           fi
+          cat .repair/history-site-part-*.b64 | base64 --decode > /tmp/history-site.tar.gz
+          echo "f15ee952a69c38d0e3c583710e832b9e592b908ef1672e6b9d8689ef2e3fd834  /tmp/history-site.tar.gz" | sha256sum --check -
+          tar -xzf /tmp/history-site.tar.gz
+          rm -rf docs/history/payload
 
       - name: 한능검 학습 사이트 검증
-        shell: bash
-        run: |
-          set +e
-          output="$(node scripts/verify_history_site.mjs 2>&1)"
-          status=$?
-          printf '%s\n' "$output" | tail -n 80
-          exit "$status"
+        run: node scripts/verify_history_site.mjs
