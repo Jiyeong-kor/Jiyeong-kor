@@ -6,7 +6,6 @@ on:
       - "docs/history/**"
       - "apps/korean-history-study/**"
       - "scripts/verify_history_site.mjs"
-      - ".repair/**"
       - ".github/workflows/history-site-check.yml"
   push:
     branches:
@@ -37,17 +36,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-
-      - name: 복구 대상 자산을 작업 공간에 적용
-        shell: bash
-        run: |
-          if ! compgen -G ".repair/history-site-part-*.b64" > /dev/null; then
-            exit 0
-          fi
-          cat .repair/history-site-part-*.b64 | base64 --decode > /tmp/history-site.tar.gz
-          echo "f15ee952a69c38d0e3c583710e832b9e592b908ef1672e6b9d8689ef2e3fd834  /tmp/history-site.tar.gz" | sha256sum --check -
-          tar -xzf /tmp/history-site.tar.gz
-          rm -rf docs/history/payload
 
       - name: 한능검 학습 사이트 검증
         run: node scripts/verify_history_site.mjs
