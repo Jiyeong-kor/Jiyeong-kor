@@ -1,0 +1,41 @@
+name: 한능검 사이트 자산 복구
+
+on:
+  push:
+    branches:
+      - ci/history-site-repair
+    paths:
+      - ".github/workflows/history-site-repair-once.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+        with:
+          ref: ci/history-site-repair
+
+      - name: 손상된 압축 자산을 정적 파일로 교체
+        shell: bash
+        run: |
+          cat .repair/history-site-part-*.b64 | base64 --decode > /tmp/history-site.tar.gz
+          echo "f15ee952a69c38d0e3c583710e832b9e592b908ef1672e6b9d8689ef2e3fd834  /tmp/history-site.tar.gz" | sha256sum --check -
+          tar -xzf /tmp/history-site.tar.gz
+          rm -rf docs/history/payload
+          node scripts/verify_history_site.mjs
+
+      - name: 복구 결과 커밋
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md apps/korean-history-study docs/history scripts/verify_history_site.mjs
+          git add -u docs/history
+          git commit -m "fix: 한능검 정적 자산 손상 복구"
+          git push origin HEAD:ci/history-site-repair
