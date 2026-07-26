@@ -1,13 +1,27 @@
-const CACHE_NAME = 'adsp-study-20260726-v4';
+const CACHE_NAME = 'adsp-study-20260727-v5-foundation-first';
 const APP_FILES = [
   "./",
   "./index.html",
-  "./adsp/manifest.webmanifest",
-  "./adsp/payload/part-01.gz.b64",
-  "./adsp/payload/part-02a.gz.b64",
-  "./adsp/payload/part-02b.gz.b64",
-  "./adsp/payload/part-03.gz.b64",
-  "./adsp/payload/part-04.gz.b64"
+  "./adsp/manifest.webmanifest?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-01.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-02.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-03.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-04a.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-04b.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-05a.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-05b.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-06a.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-06b.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-07a.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-07b.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-08a.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-08b.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-09a.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-09b.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-10a.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-10b.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-11a.gz.b64?v=20260727-v5-foundation-first",
+  "./adsp/payload/part-11b.gz.b64?v=20260727-v5-foundation-first"
 ];
 
 self.addEventListener('install', event => {
