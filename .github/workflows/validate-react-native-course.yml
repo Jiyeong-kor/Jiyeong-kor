@@ -1,0 +1,34 @@
+name: React Native 교과서 검증
+
+on:
+  push:
+    paths:
+      - 'docs/react-native/**'
+      - 'scripts/validate-react-native-course.mjs'
+      - '.github/workflows/validate-react-native-course.yml'
+  pull_request:
+    paths:
+      - 'docs/react-native/**'
+      - 'scripts/validate-react-native-course.mjs'
+      - '.github/workflows/validate-react-native-course.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: 정적 교과서 검증
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: JavaScript 문법과 교과서 구조 검증
+        run: node scripts/validate-react-native-course.mjs
