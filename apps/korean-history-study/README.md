@@ -69,6 +69,8 @@ docs/history/
 node scripts/verify_history_site.mjs
 ```
 
+GitHub Actions는 최종 정적 파일을 대상으로 같은 검증 스크립트를 다시 실행합니다.
+
 검증 스크립트는 다음 항목을 확인합니다.
 
 - 필수 정적 자산과 서비스 워커 캐시 목록
