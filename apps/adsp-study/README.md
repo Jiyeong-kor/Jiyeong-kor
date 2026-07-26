@@ -35,4 +35,4 @@ docs/
 3. `docs/index.html`의 자산 목록과 `docs/sw.js`의 캐시 버전을 갱신합니다.
 4. `python scripts/verify_adsp_site.py`를 실행합니다.
 5. PR을 병합하면 같은 GitHub Pages 주소에 반영됩니다.
-6. 병합된 작업 브랜치는 자동 정리 워크플로가 삭제합니다.
+6. PR을 닫으면 허용된 작업 브랜치는 자동 정리 워크플로가 삭제합니다. 열린 PR이 있거나 보호된 브랜치는 유지합니다.
