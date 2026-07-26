@@ -1,0 +1,9 @@
+# 개인 학습 결과
+*ADsP*학습결과*.json
+*adsp*learning*result*.json
+
+# 로컬 생성물
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
