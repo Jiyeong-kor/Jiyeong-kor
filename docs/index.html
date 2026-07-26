@@ -29,34 +29,10 @@
     }
     h1 { margin: 0 0 8px; font-size: 1.35rem; }
     p { margin: 0; color: #657087; }
-    .bar {
-      height: 8px;
-      margin-top: 18px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: #dce2ec;
-    }
-    .bar span {
-      display: block;
-      width: 45%;
-      height: 100%;
-      border-radius: inherit;
-      background: #3157d5;
-      animation: move 1s ease-in-out infinite alternate;
-    }
+    .bar { height: 8px; margin-top: 18px; overflow: hidden; border-radius: 999px; background: #dce2ec; }
+    .bar span { display: block; width: 45%; height: 100%; border-radius: inherit; background: #3157d5; animation: move 1s ease-in-out infinite alternate; }
     @keyframes move { to { transform: translateX(120%); } }
-    button {
-      display: none;
-      width: 100%;
-      min-height: 48px;
-      margin-top: 16px;
-      border: 0;
-      border-radius: 12px;
-      background: #3157d5;
-      color: #fff;
-      font: inherit;
-      font-weight: 800;
-    }
+    button { display: none; width: 100%; min-height: 48px; margin-top: 16px; border: 0; border-radius: 12px; background: #3157d5; color: #fff; font: inherit; font-weight: 800; }
   </style>
 </head>
 <body>
@@ -67,7 +43,12 @@
     <button id="retry" type="button">다시 불러오기</button>
   </main>
   <script>
-    const PARTS = ["./adsp/payload/part-01.gz.b64?v=20260726-v4", "./adsp/payload/part-02a.gz.b64?v=20260726-v4", "./adsp/payload/part-02b.gz.b64?v=20260726-v4", "./adsp/payload/part-03.gz.b64?v=20260726-v4", "./adsp/payload/part-04.gz.b64?v=20260726-v4"];
+    const ASSET_VERSION = '20260727-v5-concept-rebuild';
+    const PARTS = [
+      './adsp/payload/part-01.gz.b64?v=' + ASSET_VERSION,
+      './adsp/payload/part-02.gz.b64?v=' + ASSET_VERSION,
+      './adsp/payload/part-03.gz.b64?v=' + ASSET_VERSION
+    ];
 
     async function loadApp() {
       const status = document.getElementById('status');
@@ -80,12 +61,10 @@
         if (!('DecompressionStream' in window)) {
           throw new Error('현재 브라우저에서는 학습 자료의 압축 해제를 지원하지 않습니다.');
         }
-
         const responses = await Promise.all(PARTS.map(path => fetch(path, { cache: 'no-cache' })));
         responses.forEach(response => {
           if (!response.ok) throw new Error('학습 자료를 불러오지 못했습니다.');
         });
-
         const encoded = (await Promise.all(responses.map(response => response.text())))
           .join('')
           .replace(/\s/g, '');
@@ -93,7 +72,6 @@
         const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
         const stream = new Response(bytes).body.pipeThrough(new DecompressionStream('gzip'));
         const html = await new Response(stream).text();
-
         document.open();
         document.write(html);
         document.close();
