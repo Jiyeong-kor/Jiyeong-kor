@@ -50,8 +50,18 @@ jobs:
             echo "업로드 조각 없음"
             exit 0
           fi
-          cat .history-quality-upload/part-*.b64 > /tmp/history-quality-v3.b64
-          base64 --decode /tmp/history-quality-v3.b64 > /tmp/history-quality-v3.tar.gz
+          for file in .history-quality-upload/part-*.b64; do
+            echo "$(basename "${file}") bytes=$(wc -c < "${file}")"
+          done
+          cat .history-quality-upload/part-*.b64 | tr -d '\r\n\t ' > /tmp/history-quality-v3.b64
+          echo "base64_chars=$(wc -c < /tmp/history-quality-v3.b64)"
+          python - <<'PY'
+          from pathlib import Path
+          import base64
+          source = Path('/tmp/history-quality-v3.b64').read_text(encoding='ascii')
+          print(f'base64_mod4={len(source) % 4}')
+          Path('/tmp/history-quality-v3.tar.gz').write_bytes(base64.b64decode(source, validate=True))
+          PY
           actual="$(sha256sum /tmp/history-quality-v3.tar.gz | cut -d' ' -f1)"
           expected="9aab84c37c1da95c4342305f1d99bb27dfa8bb2b647e6b6a6336b1e0cab40bf1"
           echo "archive_bytes=$(wc -c < /tmp/history-quality-v3.tar.gz)"
