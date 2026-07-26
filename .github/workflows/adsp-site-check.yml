@@ -41,5 +41,34 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: 홈 화면 웹앱 경로 검증
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          expected_path = "/Jiyeong-kor/"
+          manifest = json.loads(
+              Path("docs/adsp/manifest.webmanifest").read_text(encoding="utf-8")
+          )
+          for key in ("id", "start_url", "scope"):
+              actual = manifest.get(key)
+              if actual != expected_path:
+                  raise SystemExit(
+                      f"[실패] manifest {key}: {actual!r}, 예상값: {expected_path!r}"
+                  )
+
+          loader = Path("docs/index.html").read_text(encoding="utf-8")
+          manifest_url = "./adsp/manifest.webmanifest?v=20260727-v5-home-screen-fix"
+          if manifest_url not in loader:
+              raise SystemExit("[실패] 새 매니페스트 캐시 버전을 로더에서 찾지 못했습니다.")
+
+          service_worker = Path("docs/sw.js").read_text(encoding="utf-8")
+          if manifest_url not in service_worker:
+              raise SystemExit("[실패] 새 매니페스트 캐시 버전을 서비스 워커에서 찾지 못했습니다.")
+
+          print("[성공] 홈 화면 웹앱 시작 경로 검증 완료")
+          PY
+
       - name: 배포 자산 검증
         run: python scripts/verify_adsp_site.py

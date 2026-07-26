@@ -1,8 +1,8 @@
-const CACHE_NAME = 'adsp-study-20260727-v5-foundation-first';
+const CACHE_NAME = 'adsp-study-20260727-v5-home-screen-fix';
 const APP_FILES = [
   "./",
   "./index.html",
-  "./adsp/manifest.webmanifest?v=20260727-v5-foundation-first",
+  "./adsp/manifest.webmanifest?v=20260727-v5-home-screen-fix",
   "./adsp/payload/part-01.gz.b64?v=20260727-v5-foundation-first",
   "./adsp/payload/part-02.gz.b64?v=20260727-v5-foundation-first",
   "./adsp/payload/part-03.gz.b64?v=20260727-v5-foundation-first",
