@@ -3,86 +3,52 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f5f1e8">
-  <meta name="description" content="한국사능력검정시험 심화 1급 대비 개념·예상 문제·오답 복습·실전 모의고사 웹사이트입니다.">
+  <meta name="theme-color" content="#f3efe6">
+  <meta name="description" content="한국사능력검정시험 심화 1급 대비 개념 학습, 예상 문제, 오답 복습, 50문항 실전 모의고사를 제공합니다.">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" href="./icon.svg" type="image/svg+xml">
-  <title>한능검 1급 훈련소 불러오는 중</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { min-height: 100vh; margin: 0; display: grid; place-items: center; padding: 24px; background: #f5f1e8; color: #20211f; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; line-height: 1.6; }
-    .card { width: min(100%, 460px); padding: 28px; border: 1px solid #d9d1c1; border-radius: 22px; background: #fffdf8; box-shadow: 0 12px 30px rgba(65,49,29,.09); }
-    .mark { display: grid; width: 48px; height: 48px; margin-bottom: 16px; place-items: center; border-radius: 14px; background: #7a2f35; color: #fff; font: 800 1.4rem Georgia, serif; }
-    h1 { margin: 0 0 8px; font-size: 1.4rem; } p { margin: 0; color: #65675f; }
-    .bar { height: 8px; margin-top: 20px; overflow: hidden; border-radius: 999px; background: #ebe4d5; }
-    .bar span { display: block; width: 42%; height: 100%; border-radius: inherit; background: #7a2f35; animation: move 1s ease-in-out infinite alternate; }
-    @keyframes move { to { transform: translateX(138%); } }
-    button { display: none; width: 100%; min-height: 48px; margin-top: 18px; border: 0; border-radius: 12px; background: #7a2f35; color: #fff; font: inherit; font-weight: 800; cursor: pointer; }
-  </style>
+  <link rel="stylesheet" href="./styles.css?v=20260727-1">
+  <title>한능검 1급 훈련소</title>
 </head>
 <body>
-  <main class="card">
-    <div class="mark" aria-hidden="true">史</div>
-    <h1>한능검 1급 훈련소를 불러오고 있습니다.</h1>
-    <p id="status">2,200개 예상 문제와 학습 기록 기능을 준비하고 있습니다.</p>
-    <div class="bar" id="bar" aria-hidden="true"><span></span></div>
-    <button id="retry" type="button">다시 불러오기</button>
-  </main>
-  <script>
-    const PARTS = ["./payload/part-01.gz.b64?v=20260726-2", "./payload/part-02.gz.b64?v=20260726-2", "./payload/part-03.gz.b64?v=20260726-2", "./payload/part-04.gz.b64?v=20260726-2"];
+  <a class="skip-link" href="#mainContent">본문으로 바로 이동</a>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <button class="brand" type="button" data-view-target="home" aria-label="한능검 1급 훈련소 홈">
+        <span class="brand-mark" aria-hidden="true">史</span>
+        <span><strong>한능검 1급 훈련소</strong><small>심화 80점 이상 목표</small></span>
+      </button>
+      <nav class="primary-nav" id="primaryNav" aria-label="주요 메뉴">
+        <button type="button" data-view="home">홈</button>
+        <button type="button" data-view="learn">개념</button>
+        <button type="button" data-view="practice">예상 문제</button>
+        <button type="button" data-view="mock">실전 모의</button>
+        <button type="button" data-view="review">복습</button>
+        <button type="button" data-view="sources">기준·출처</button>
+      </nav>
+      <div class="utility-actions">
+        <button class="utility-button" id="exportButton" type="button" aria-label="학습 기록 내보내기">내보내기</button>
+        <button class="utility-button" id="importButton" type="button" aria-label="학습 기록 불러오기">불러오기</button>
+        <input id="importInput" type="file" accept="application/json,.json" hidden>
+        <button class="theme-button" id="themeButton" type="button" aria-label="어두운 화면으로 변경">◐</button>
+      </div>
+    </div>
+  </header>
 
-    const PATCHES = [
-      ["ICBmdW5jdGlvbiBoYXNoU3RyaW5nKHZhbHVlKSB7", "ICBmdW5jdGlvbiBoYXNGaW5hbENvbnNvbmFudCh2YWx1ZSkgewogICAgY29uc3QgY2hhcmFjdGVycyA9IFsuLi5TdHJpbmcodmFsdWUgPz8gJycpXS5yZXZlcnNlKCk7CiAgICBjb25zdCBsYXN0ID0gY2hhcmFjdGVycy5maW5kKGNoYXJhY3RlciA9PiAvW+qwgC3tnqNBLVphLXowLTldLy50ZXN0KGNoYXJhY3RlcikpOwogICAgaWYgKCFsYXN0KSByZXR1cm4gZmFsc2U7CiAgICBjb25zdCBjb2RlID0gbGFzdC5jaGFyQ29kZUF0KDApOwogICAgaWYgKGNvZGUgPj0gMHhBQzAwICYmIGNvZGUgPD0gMHhEN0EzKSByZXR1cm4gKGNvZGUgLSAweEFDMDApICUgMjggIT09IDA7CiAgICByZXR1cm4gZmFsc2U7CiAgfQoKICBmdW5jdGlvbiB0b3BpYyh2YWx1ZSkgewogICAgY29uc3QgdGV4dCA9IFN0cmluZyh2YWx1ZSA/PyAnJyk7CiAgICByZXR1cm4gYCR7dGV4dH0ke2hhc0ZpbmFsQ29uc29uYW50KHRleHQpID8gJ+ydgCcgOiAn64qUJ31gOwogIH0KCiAgZnVuY3Rpb24gaGFzaFN0cmluZyh2YWx1ZSkgew=="],
-      ["ICAgICAgeyB0ZXh0OiBmYWN0LnRpdGxlLCBjb3JyZWN0OiB0cnVlLCBleHBsYW5hdGlvbjogYCR7ZmFjdC50aXRsZX3snYAo64qUKSDsoJzsi5zrkJwg65GQIOuLqOyEnOyXkCDrqqjrkZAg7ZW064u57ZWp64uI64ukLmAgfSw=", "ICAgICAgeyB0ZXh0OiBmYWN0LnRpdGxlLCBjb3JyZWN0OiB0cnVlLCBleHBsYW5hdGlvbjogYCR7dG9waWMoZmFjdC50aXRsZSl9IOygnOyLnOuQnCDrkZAg64uo7ISc7JeQIOuqqOuRkCDtlbTri7ntlanri4jri6QuYCB9LA=="],
-      ["ICAgICAgY29yZUV4cGxhbmF0aW9uOiBgJHtmYWN0LnRpdGxlfeydgCjripQpICR7ZmFjdC5zdW1tYXJ5fWA=", "ICAgICAgY29yZUV4cGxhbmF0aW9uOiBgJHt0b3BpYyhmYWN0LnRpdGxlKX0gJHtmYWN0LnN1bW1hcnl9YA=="],
-      ["ICAgICAgY29yZUV4cGxhbmF0aW9uOiBg66y47KCc64qUIOyYs+yngCDslYrsnYAg7ISk66qF7J2EIOusu+yKteuLiOuLpC4gJHtvdXRzaWRlckNsdWV97J2AKOuKlCkgJHtvdXRzaWRlci50aXRsZX3snZgg64K07Jqp7J6F64uI64ukLmA=", "ICAgICAgY29yZUV4cGxhbmF0aW9uOiBg66y47KCc64qUIOyYs+yngCDslYrsnYAg7ISk66qF7J2EIOusu+yKteuLiOuLpC4gJHt0b3BpYyhg4oCcJHtvdXRzaWRlckNsdWV94oCdYCl9ICR7b3V0c2lkZXIudGl0bGV97J2YIOuCtOyaqeyeheuLiOuLpC5g"],
-      ["ICAgICAgeyB0ZXh0OiBmYWN0LmVyYSwgY29ycmVjdDogdHJ1ZSwgZXhwbGFuYXRpb246IGAke2ZhY3QudGl0bGV97J2AKOuKlCkgJHtmYWN0LmVyYX3sl5Ag7ZW064u57ZWp64uI64ukLmAgfSw=", "ICAgICAgeyB0ZXh0OiBmYWN0LmVyYSwgY29ycmVjdDogdHJ1ZSwgZXhwbGFuYXRpb246IGAke3RvcGljKGZhY3QudGl0bGUpfSAke2ZhY3QuZXJhfeyXkCDtlbTri7ntlanri4jri6QuYCB9LA=="],
-      ["ICAgICAgY29yZUV4cGxhbmF0aW9uOiBgJHtmYWN0LnRpdGxlfeydgCjripQpICR7ZmFjdC5lcmF97J2YIOuCtOyaqeyeheuLiOuLpC5g", "ICAgICAgY29yZUV4cGxhbmF0aW9uOiBgJHt0b3BpYyhmYWN0LnRpdGxlKX0gJHtmYWN0LmVyYX3snZgg64K07Jqp7J6F64uI64ukLmA="],
-      ["ICAgIGNvbnN0IGVhcmxpZXIgPSBISVNUT1JZX0ZBQ1RTLmZpbHRlcihjYW5kaWRhdGUgPT4gY2FuZGlkYXRlLm9yZGVyIDwgZmFjdC5vcmRlcik7CiAgICBjb25zdCBsYXRlciA9IEhJU1RPUllfRkFDVFMuZmlsdGVyKGNhbmRpZGF0ZSA9PiBjYW5kaWRhdGUub3JkZXIgPiBmYWN0Lm9yZGVyKTs=", "ICAgIGNvbnN0IGVhcmxpZXIgPSBISVNUT1JZX0ZBQ1RTLmZpbHRlcihjYW5kaWRhdGUgPT4gY2FuZGlkYXRlLnllYXIgPCBmYWN0LnllYXIpOwogICAgY29uc3QgbGF0ZXIgPSBISVNUT1JZX0ZBQ1RTLmZpbHRlcihjYW5kaWRhdGUgPT4gY2FuZGlkYXRlLnllYXIgPiBmYWN0LnllYXIpOw=="],
-      ["ICAgICAgeyB0ZXh0OiBjb3JyZWN0LnRpdGxlLCBjb3JyZWN0OiB0cnVlLCBleHBsYW5hdGlvbjogYCR7Y29ycmVjdC50aXRsZX3snYAo64qUKSAke2ZhY3QudGl0bGV967O064ukICR7ZGlyZWN0aW9uID09PSAnYmVmb3JlJyA/ICfrqLzsoIAnIDogJ+uSpOyXkCd9IOyghOqwnOuQmOyXiOyKteuLiOuLpC5gIH0sCiAgICAgIC4uLndyb25nLm1hcChpdGVtID0+ICh7IHRleHQ6IGl0ZW0udGl0bGUsIGNvcnJlY3Q6IGZhbHNlLCBleHBsYW5hdGlvbjogYCR7aXRlbS50aXRsZX3snYAo64qUKSAke2ZhY3QudGl0bGV967O064ukICR7ZGlyZWN0aW9uID09PSAnYmVmb3JlJyA/ICfrkqTsl5AnIDogJ+uovOyggCd9IOyghOqwnOuQmOyXiOyKteuLiOuLpC5gIH0pKQ==", "ICAgICAgeyB0ZXh0OiBjb3JyZWN0LnRpdGxlLCBjb3JyZWN0OiB0cnVlLCBleHBsYW5hdGlvbjogYCR7dG9waWMoY29ycmVjdC50aXRsZSl9ICR7ZmFjdC50aXRsZX3rs7Tri6QgJHtkaXJlY3Rpb24gPT09ICdiZWZvcmUnID8gJ+uovOyggCcgOiAn65Kk7JeQJ30g7KCE6rCc65CY7JeI7Iq164uI64ukLmAgfSwKICAgICAgLi4ud3JvbmcubWFwKGl0ZW0gPT4gKHsgdGV4dDogaXRlbS50aXRsZSwgY29ycmVjdDogZmFsc2UsIGV4cGxhbmF0aW9uOiBgJHt0b3BpYyhpdGVtLnRpdGxlKX0gJHtmYWN0LnRpdGxlfeuztOuLpCAke2RpcmVjdGlvbiA9PT0gJ2JlZm9yZScgPyAn65Kk7JeQJyA6ICfrqLzsoIAnfSDsoITqsJzrkJjsl4jsirXri4jri6QuYCB9KSk="],
-      ["ICAgIGNvbnN0IHNhbWVFcmEgPSBISVNUT1JZX0ZBQ1RTLmZpbHRlcihpdGVtID0+IGl0ZW0uZXJhID09PSBmYWN0LmVyYSk7CiAgICBjb25zdCBzZWxlY3RlZCA9IHVuaXF1ZUJ5KFtmYWN0LCAuLi5zaHVmZmxlZChzYW1lRXJhLmZpbHRlcihpdGVtID0+IGl0ZW0uaWQgIT09IGZhY3QuaWQpLCBgc2VxdWVuY2UtJHtmYWN0LmlkfS0ke3ZhcmlhbnR9YCldLCBpdGVtID0+IGl0ZW0uaWQpLnNsaWNlKDAsIDQpOwogICAgaWYgKHNlbGVjdGVkLmxlbmd0aCA8IDQpIHJldHVybiBtYWtlQ2hyb25vbG9neVF1ZXN0aW9uKGZhY3QsIHZhcmlhbnQsICdiZWZvcmUnKTsKICAgIGNvbnN0IHNvcnRlZEZhY3RzID0gWy4uLnNlbGVjdGVkXS5zb3J0KChhLCBiKSA9PiBhLm9yZGVyIC0gYi5vcmRlcik7", "ICAgIGNvbnN0IHNhbWVFcmEgPSBISVNUT1JZX0ZBQ1RTLmZpbHRlcihpdGVtID0+IGl0ZW0uZXJhID09PSBmYWN0LmVyYSAmJiBpdGVtLmlkICE9PSBmYWN0LmlkKTsKICAgIGNvbnN0IHNlbGVjdGVkID0gW2ZhY3RdOwogICAgY29uc3Qgc2VsZWN0ZWRZZWFycyA9IG5ldyBTZXQoW2ZhY3QueWVhcl0pOwogICAgc2h1ZmZsZWQoc2FtZUVyYSwgYHNlcXVlbmNlLSR7ZmFjdC5pZH0tJHt2YXJpYW50fWApLmZvckVhY2goaXRlbSA9PiB7CiAgICAgIGlmIChzZWxlY3RlZC5sZW5ndGggPj0gNCB8fCBzZWxlY3RlZFllYXJzLmhhcyhpdGVtLnllYXIpKSByZXR1cm47CiAgICAgIHNlbGVjdGVkLnB1c2goaXRlbSk7CiAgICAgIHNlbGVjdGVkWWVhcnMuYWRkKGl0ZW0ueWVhcik7CiAgICB9KTsKICAgIGlmIChzZWxlY3RlZC5sZW5ndGggPCA0KSByZXR1cm4gbWFrZUNocm9ub2xvZ3lRdWVzdGlvbihmYWN0LCB2YXJpYW50LCAnYmVmb3JlJyk7CiAgICBjb25zdCBzb3J0ZWRGYWN0cyA9IFsuLi5zZWxlY3RlZF0uc29ydCgoYSwgYikgPT4gYS55ZWFyIC0gYi55ZWFyIHx8IGEub3JkZXIgLSBiLm9yZGVyKTs="],
-      ["ICAgICAgLi4uZGlzdHJhY3RvcnMubWFwKGl0ZW0gPT4gKHsgdGV4dDogaXRlbS50aXRsZSwgY29ycmVjdDogZmFsc2UsIGV4cGxhbmF0aW9uOiBgJHtpdGVtLnRpdGxlfeydgCjripQpIOKAnCR7aXRlbS5zdW1tYXJ5feKAneyXkCDtlbTri7ntlanri4jri6QuYCB9KSk=", "ICAgICAgLi4uZGlzdHJhY3RvcnMubWFwKGl0ZW0gPT4gKHsgdGV4dDogaXRlbS50aXRsZSwgY29ycmVjdDogZmFsc2UsIGV4cGxhbmF0aW9uOiBgJHt0b3BpYyhpdGVtLnRpdGxlKX0g4oCcJHtpdGVtLnN1bW1hcnl94oCd7JeQIO2VtOuLue2VqeuLiOuLpC5gIH0pKQ=="],
-      ["ICAgICJpZCI6ICJtYW5jaHVfaW52YXNpb25zIiwKICAgICJlcmEiOiAi7KGw7ISgIOyghOq4sCIs", "ICAgICJpZCI6ICJtYW5jaHVfaW52YXNpb25zIiwKICAgICJlcmEiOiAi7KGw7ISgIO2bhOq4sCIs"],
-      ["ICAgICJpZCI6ICJnd2FuZ2hhZV9pbmpvIiwKICAgICJlcmEiOiAi7KGw7ISgIOyghOq4sCIs", "ICAgICJpZCI6ICJnd2FuZ2hhZV9pbmpvIiwKICAgICJlcmEiOiAi7KGw7ISgIO2bhOq4sCIs"],
-      ["ICBmdW5jdGlvbiBmb3JtYXREYXRlKHZhbHVlKSB7CiAgICByZXR1cm4gbmV3IEludGwuRGF0ZVRpbWVGb3JtYXQoJ2tvLUtSJywgeyB5ZWFyOiAnbnVtZXJpYycsIG1vbnRoOiAnbG9uZycsIGRheTogJ251bWVyaWMnLCB3ZWVrZGF5OiAnc2hvcnQnIH0pLmZvcm1hdChuZXcgRGF0ZShgJHt2YWx1ZX1UMDA6MDA6MDArMDk6MDBgKSk7CiAgfQ==", "ICBmdW5jdGlvbiBmb3JtYXREYXRlKHZhbHVlKSB7CiAgICByZXR1cm4gbmV3IEludGwuRGF0ZVRpbWVGb3JtYXQoJ2tvLUtSJywgeyB5ZWFyOiAnbnVtZXJpYycsIG1vbnRoOiAnbG9uZycsIGRheTogJ251bWVyaWMnLCB3ZWVrZGF5OiAnc2hvcnQnLCB0aW1lWm9uZTogJ0FzaWEvU2VvdWwnIH0pLmZvcm1hdChuZXcgRGF0ZShgJHt2YWx1ZX1UMDA6MDA6MDArMDk6MDBgKSk7CiAgfQ=="],
-      ["ICBmdW5jdGlvbiBuZXh0RXhhbUluZm8oKSB7CiAgICBjb25zdCBub3cgPSBuZXcgRGF0ZSgpOwogICAgbm93LnNldEhvdXJzKDAsIDAsIDAsIDApOwogICAgY29uc3QgbmV4dCA9IEVYQU1TLmZpbmQoZXhhbSA9PiBuZXcgRGF0ZShgJHtleGFtLmRhdGV9VDAwOjAwOjAwKzA5OjAwYCkgPj0gbm93KSB8fCBFWEFNU1tFWEFNUy5sZW5ndGggLSAxXTsKICAgIGNvbnN0IHRhcmdldCA9IG5ldyBEYXRlKGAke25leHQuZGF0ZX1UMDA6MDA6MDArMDk6MDBgKTsKICAgIGNvbnN0IGRheXMgPSBNYXRoLmNlaWwoKHRhcmdldCAtIG5vdykgLyA4NjQwMDAwMCk7CiAgICByZXR1cm4geyAuLi5uZXh0LCBkYXlzIH07CiAgfQ==", "ICBmdW5jdGlvbiBuZXh0RXhhbUluZm8oKSB7CiAgICBjb25zdCBzZW91bERhdGVQYXJ0cyA9IE9iamVjdC5mcm9tRW50cmllcygKICAgICAgbmV3IEludGwuRGF0ZVRpbWVGb3JtYXQoJ2VuLVVTJywgewogICAgICAgIHRpbWVab25lOiAnQXNpYS9TZW91bCcsCiAgICAgICAgeWVhcjogJ251bWVyaWMnLAogICAgICAgIG1vbnRoOiAnMi1kaWdpdCcsCiAgICAgICAgZGF5OiAnMi1kaWdpdCcKICAgICAgfSkuZm9ybWF0VG9QYXJ0cyhuZXcgRGF0ZSgpKS5maWx0ZXIocGFydCA9PiBwYXJ0LnR5cGUgIT09ICdsaXRlcmFsJykubWFwKHBhcnQgPT4gW3BhcnQudHlwZSwgcGFydC52YWx1ZV0pCiAgICApOwogICAgY29uc3QgdG9kYXkgPSBuZXcgRGF0ZShgJHtzZW91bERhdGVQYXJ0cy55ZWFyfS0ke3Nlb3VsRGF0ZVBhcnRzLm1vbnRofS0ke3Nlb3VsRGF0ZVBhcnRzLmRheX1UMDA6MDA6MDArMDk6MDBgKTsKICAgIGNvbnN0IG5leHQgPSBFWEFNUy5maW5kKGV4YW0gPT4gbmV3IERhdGUoYCR7ZXhhbS5kYXRlfVQwMDowMDowMCswOTowMGApID49IHRvZGF5KSB8fCBFWEFNU1tFWEFNUy5sZW5ndGggLSAxXTsKICAgIGNvbnN0IHRhcmdldCA9IG5ldyBEYXRlKGAke25leHQuZGF0ZX1UMDA6MDA6MDArMDk6MDBgKTsKICAgIGNvbnN0IGRheXMgPSBNYXRoLnJvdW5kKCh0YXJnZXQgLSB0b2RheSkgLyA4NjQwMDAwMCk7CiAgICByZXR1cm4geyAuLi5uZXh0LCBkYXlzIH07CiAgfQ=="]
-    ];
-    const patchDecoder = new TextDecoder();
-    function decodePatch(value) {
-      return patchDecoder.decode(Uint8Array.from(atob(value), character => character.charCodeAt(0)));
-    }
-    function applyCorrections(source) {
-      return PATCHES.reduce((current, [encodedBefore, encodedAfter]) => {
-        const before = decodePatch(encodedBefore);
-        const after = decodePatch(encodedAfter);
-        if (current.includes(before)) return current.replace(before, after);
-        return current;
-      }, source);
-    }
-    async function loadApp() {
-      const status = document.getElementById('status');
-      const retry = document.getElementById('retry');
-      retry.style.display = 'none';
-      document.getElementById('bar').style.display = 'block';
-      status.textContent = '학습 자료를 불러오고 있습니다.';
-      try {
-        if (!('DecompressionStream' in window)) throw new Error('현재 브라우저는 학습 자료 압축 해제를 지원하지 않습니다. Chrome, Edge, Safari 또는 Firefox의 최신 버전을 사용해 주세요.');
-        const responses = await Promise.all(PARTS.map(path => fetch(path, { cache: 'no-cache' })));
-        if (responses.some(response => !response.ok)) throw new Error('학습 자료를 불러오지 못했습니다.');
-        const encoded = (await Promise.all(responses.map(response => response.text()))).join('').replace(/\s/g, '');
-        const binary = atob(encoded);
-        const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
-        const stream = new Response(bytes).body.pipeThrough(new DecompressionStream('gzip'));
-        const html = applyCorrections(await new Response(stream).text());
-        document.open(); document.write(html); document.close();
-      } catch (error) {
-        document.getElementById('bar').style.display = 'none';
-        status.textContent = error?.message || '네트워크 연결을 확인한 뒤 다시 시도해 주세요.';
-        retry.style.display = 'block';
-      }
-    }
-    document.getElementById('retry').addEventListener('click', loadApp);
-    loadApp();
-  </script>
+  <div class="app-shell">
+    <main id="mainContent" tabindex="-1" aria-live="polite"></main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <noscript>
+    <section class="noscript-card">
+      <h1>자바스크립트가 필요합니다.</h1>
+      <p>이 학습 페이지에서 문제 생성과 학습 기록 저장 기능을 사용하려면 브라우저의 자바스크립트를 켜야 합니다.</p>
+    </section>
+  </noscript>
+
+  <script src="./data.js?v=20260727-1"></script>
+  <script src="./app.js?v=20260727-1"></script>
 </body>
 </html>
