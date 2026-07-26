@@ -1,17 +1,13 @@
-const CACHE_NAME = 'adsp-mobile-v3-20260726';
+const CACHE_NAME = 'adsp-mobile-v3-20260726-gzip';
 const APP_FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './parts/p01.b64',
-  './parts/p02.b64',
-  './parts/p03.b64',
-  './parts/p04.b64',
-  './parts/p05.b64',
-  './parts/p06.b64',
-  './parts/p07.b64',
-  './parts/p08.b64',
-  './parts/p09.b64'
+  './parts/app01.gz.b64',
+  './parts/app02.gz.b64',
+  './parts/app03.gz.b64',
+  './parts/app04.gz.b64',
+  './parts/app05.gz.b64'
 ];
 
 self.addEventListener('install', event => {
