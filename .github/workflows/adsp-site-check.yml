@@ -1,0 +1,36 @@
+name: ADsP 사이트 검증
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "apps/adsp-study/**"
+      - "scripts/verify_adsp_site.py"
+      - ".github/workflows/adsp-site-check.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**"
+      - "apps/adsp-study/**"
+      - "scripts/verify_adsp_site.py"
+      - ".github/workflows/adsp-site-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 배포 자산 검증
+        run: python scripts/verify_adsp_site.py
