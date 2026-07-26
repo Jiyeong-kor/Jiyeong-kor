@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#090d18" media="(prefers-color-scheme: dark)">
-  <meta name="description" content="Kotlin과 Jetpack Compose Android 개발자를 위한 React Native 실전 교과서입니다. 공식 문서를 바탕으로 개념 설명, Compose 비교, 코드, 문제, 실습을 제공합니다.">
-  <title>Compose 개발자의 React Native 실전 교과서</title>
-  <link rel="stylesheet" href="./styles.css?v=20260726-3">
+  <meta name="description" content="Kotlin과 Jetpack Compose로 Android 앱을 개발해 본 사람이 React Native를 처음 배울 때 사용하는 실전 학습 과정입니다.">
+  <title>Compose Android 개발자를 위한 React Native 과정</title>
+  <link rel="stylesheet" href="./styles.css?v=20260726-4">
 </head>
 <body>
   <a class="skip-link" href="#mainContent">본문으로 바로 이동</a>
@@ -23,14 +23,14 @@
         aria-expanded="false"
       >☰</button>
 
-      <a class="brand" id="brandHome" href="#home" aria-label="React Native 교과서 홈">
+      <a class="brand" id="brandHome" href="#home" aria-label="React Native 과정 홈">
         <span class="brand-mark" aria-hidden="true">RN</span>
-        <span class="brand-label">Compose 개발자의 React Native 교과서</span>
+        <span class="brand-label">Compose Android 개발자의 React Native 과정</span>
       </a>
 
       <span class="appbar-spacer"></span>
 
-      <button class="text-button header-home" id="homeButton" type="button" aria-label="교과서 홈으로 이동">
+      <button class="text-button header-home" id="homeButton" type="button" aria-label="과정 홈으로 이동">
         <span aria-hidden="true">⌂</span>
         <span class="header-home-label"> 홈</span>
       </button>
@@ -47,7 +47,7 @@
   <div class="shell">
     <aside class="sidebar" id="sidebar" aria-label="React Native 학습 목차">
       <div class="sidebar-head">
-        <h2>20개 단원 목차</h2>
+        <h2>전체 목차</h2>
         <input
           class="sidebar-search"
           id="sidebarSearch"
@@ -76,12 +76,12 @@
     <main class="content" id="mainContent" tabindex="-1">
       <section class="screen" id="homeScreen">
         <section class="hero">
-          <span class="hero-eyebrow">공식 문서 기반 · 설명부터 실습까지 한 페이지에서</span>
-          <h1>링크 목록이 아니라<br>실제로 공부하는 교과서</h1>
+          <span class="hero-eyebrow">Kotlin·Jetpack Compose Android 개발자를 위한 과정</span>
+          <h1>Android 개발 경험을<br>React Native로 확장합니다</h1>
           <p>
-            Kotlin과 Jetpack Compose로 앱을 만들어 본 개발자가 JavaScript와 TypeScript부터 React의 렌더링 모델,
-            React Native UI, New Architecture, Kotlin 네이티브 연동, 테스트와 Android 출시까지 순서대로 학습합니다.
-            각 단원에는 한국어 개념 설명, Compose 비교, 실행 가능한 코드, 확인 문제, 개인 실습과 팀 토론이 들어 있습니다.
+            이 과정은 Kotlin과 Jetpack Compose로 Android 화면, 상태, 네트워크 기능을 구현해 본 개발자를 대상으로 합니다.
+            JavaScript, TypeScript, React와 React Native는 처음이라고 가정합니다.
+            이미 익숙한 Android 기초를 반복하기보다 React Native에서 달라지는 렌더링, 상태, UI, 네이티브 경계를 집중적으로 학습합니다.
           </p>
           <div class="hero-actions">
             <button class="primary-button" id="homeStart" type="button">첫 미완료 단원 시작</button>
@@ -89,67 +89,70 @@
               <span id="homeResumeLabel">이어서 학습</span>
             </button>
           </div>
-          <div class="version-chips" aria-label="교과서 기술 기준">
-            <span class="chip">React Native 0.86</span>
-            <span class="chip">React 19.2.3</span>
-            <span class="chip">Expo SDK 57</span>
-            <span class="chip">New Architecture</span>
-            <span class="chip">2026-07-26 검증</span>
+          <div class="version-chips" aria-label="선수 지식">
+            <span class="chip">Kotlin</span>
+            <span class="chip">Jetpack Compose</span>
+            <span class="chip">Coroutine</span>
+            <span class="chip">Gradle·Android Studio</span>
+          </div>
+        </section>
+
+        <section class="home-section" aria-labelledby="audienceHeading">
+          <h2 id="audienceHeading">이 과정의 전제와 범위</h2>
+          <p class="section-lead">아래 전제를 충족하는 개발자가 1강부터 순서대로 학습하도록 구성했습니다.</p>
+          <div class="decision-grid">
+            <article class="decision-card recommended">
+              <h3>이미 알고 있다고 보는 내용</h3>
+              <p>Kotlin 문법과 컬렉션, Compose의 상태와 기본적인 부수 효과, Coroutine, Gradle, Android 생명주기와 화면 이동의 기초입니다.</p>
+            </article>
+            <article class="decision-card">
+              <h3>처음부터 배우는 내용</h3>
+              <p>JavaScript와 TypeScript, React 렌더링과 Hook, React Native UI와 레이아웃, Expo, Metro, Hermes, New Architecture를 설명합니다.</p>
+            </article>
+            <article class="decision-card">
+              <h3>완료할 수 있는 범위</h3>
+              <p>React Native 화면과 앱 구조를 구현하고, Kotlin 기능을 연결하며, 테스트와 Android release 빌드까지 수행합니다. 프로그래밍 입문이나 웹 React 일반 과정은 다루지 않습니다.</p>
+            </article>
           </div>
         </section>
 
         <section class="home-section" aria-labelledby="progressHeading">
-          <h2 id="progressHeading">현재 학습 현황</h2>
-          <p class="section-lead">완료 표시와 문제 풀이 기록은 이 브라우저에 자동으로 저장됩니다. JSON 파일로 옮길 수도 있습니다.</p>
+          <h2 id="progressHeading">학습 현황</h2>
+          <p class="section-lead">완료 표시와 문제 풀이 기록은 현재 브라우저에 저장됩니다. 다른 기기로 옮길 때에는 진도 파일을 사용합니다.</p>
           <div class="overview-grid">
             <article class="info-card"><strong id="homeCompleted">0</strong><span>완료한 단원</span></article>
             <article class="info-card"><strong id="homeTotal">20</strong><span>전체 단원</span></article>
-            <article class="info-card"><strong id="homeHours">42시간</strong><span>이론 예상 시간</span></article>
+            <article class="info-card"><strong id="homeHours">42시간</strong><span>예상 이론 학습 시간</span></article>
           </div>
         </section>
 
-        <section class="home-section" aria-labelledby="methodHeading">
-          <h2 id="methodHeading">이 사이트에서 공부하는 방식</h2>
-          <p class="section-lead">공식 문서를 외부에서 먼저 읽어 오도록 떠넘기지 않습니다. 교과서 본문에서 필요한 내용을 가르친 뒤 원문을 검증 자료로 제공합니다.</p>
+        <section class="home-section" aria-labelledby="studyHeading">
+          <h2 id="studyHeading">한 단원을 학습하는 순서</h2>
           <div class="decision-grid">
             <article class="decision-card recommended">
-              <h3>1. 개념을 한국어로 학습합니다</h3>
-              <p>새 용어를 정의하고 왜 필요한지 설명합니다. Compose에서 이미 알고 있는 개념과 같아 보이지만 실제로 다른 지점을 명확히 구분합니다.</p>
+              <h3>1. 개념과 차이를 이해합니다</h3>
+              <p>새 용어를 먼저 정의한 뒤 Compose에서 가까운 개념과 실제 차이를 비교합니다.</p>
             </article>
             <article class="decision-card">
-              <h3>2. 코드와 상태 흐름을 확인합니다</h3>
-              <p>TypeScript, TSX, Kotlin 예제를 함께 읽고 렌더링, 수명주기, 스레드, 네이티브 경계를 실제 코드로 연결합니다.</p>
+              <h3>2. 코드로 확인합니다</h3>
+              <p>TypeScript, TSX와 Kotlin 예제를 읽고 상태 흐름과 플랫폼 경계를 확인합니다.</p>
             </article>
             <article class="decision-card">
               <h3>3. 문제와 실습으로 검증합니다</h3>
-              <p>각 단원에서 바로 확인 문제를 풀고 개인 구현과 팀 토론을 진행합니다. 마지막에는 기존 Compose 앱의 기능을 React Native로 포팅합니다.</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="home-section" aria-labelledby="baselineHeading">
-          <h2 id="baselineHeading">프로젝트 시작 기준</h2>
-          <p class="section-lead">신규 팀 실습 앱과 기존 Android 앱 통합은 시작 방식이 다릅니다.</p>
-          <div class="decision-grid">
-            <article class="decision-card recommended">
-              <h3>신규 팀 실습 앱</h3>
-              <p>Expo 프로젝트와 Development Build를 사용합니다. 파일 기반 라우팅, 개발 빌드, 네이티브 모듈과 출시 도구를 단계적으로 학습합니다.</p>
-            </article>
-            <article class="decision-card">
-              <h3>기존 Kotlin 앱에 일부 기능 추가</h3>
-              <p>React Native Community 구조를 기존 Gradle 프로젝트에 통합합니다. Android가 진입과 종료를 소유하고 React Native가 기능 내부 흐름을 담당합니다.</p>
-            </article>
-            <article class="decision-card">
-              <h3>Kotlin 기능 재사용</h3>
-              <p>TypeScript Codegen 명세와 Turbo Native Module을 사용합니다. 실제 네이티브 UI는 Fabric Native Component로 연결합니다.</p>
+              <p>본문에서 설명한 확인 문제를 풀고 개인 구현과 팀 토론 과제를 수행합니다.</p>
             </article>
           </div>
         </section>
 
         <section class="home-section" aria-labelledby="courseHeading">
           <h2 id="courseHeading">전체 20개 단원</h2>
-          <p class="section-lead">1강부터 순서대로 공부하면 약 40시간의 이론과 8주 팀 프로젝트를 완성할 수 있습니다.</p>
+          <p class="section-lead">JavaScript와 React 기초부터 React Native 앱 구현, Kotlin 연동과 Android 출시까지 순서대로 이어집니다.</p>
           <div class="course-grid" id="courseGrid"></div>
+        </section>
+
+        <section class="home-section" aria-labelledby="baselineHeading">
+          <h2 id="baselineHeading">예제 기술 기준</h2>
+          <p class="section-lead">예제는 React Native 0.86, React 19.2.3, Expo SDK 57을 기준으로 작성했습니다. 세부 API를 확인할 수 있도록 각 단원 마지막에 해당 공식 문서를 연결했습니다.</p>
         </section>
       </section>
 
@@ -175,8 +178,8 @@
         </section>
 
         <section class="sources-panel" aria-labelledby="sourcesHeading">
-          <h2 id="sourcesHeading">이 단원을 만든 공식 근거</h2>
-          <p class="source-note">본문을 공부한 뒤 세부 API와 버전 변경을 원문에서 확인합니다. 링크는 보충 자료이며 본문을 대신하지 않습니다.</p>
+          <h2 id="sourcesHeading">공식 문서</h2>
+          <p class="source-note">본문에서 학습한 개념과 API의 현재 세부 사항을 원문에서 확인할 수 있습니다.</p>
           <ul class="source-list" id="sourceList"></ul>
         </section>
 
@@ -188,8 +191,8 @@
       </article>
 
       <section class="error-state" id="loadError" hidden>
-        <h2>교과서 데이터를 불러오지 못했습니다.</h2>
-        <p>페이지를 새로고침해 주세요. 문제가 계속되면 GitHub Pages 배포 파일을 확인해야 합니다.</p>
+        <h2>학습 내용을 불러오지 못했습니다.</h2>
+        <p>네트워크 연결을 확인한 뒤 페이지를 새로고침해 주세요.</p>
       </section>
     </main>
   </div>
@@ -197,11 +200,12 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>window.RN_COURSE = [];</script>
-  <script src="./course/part-1.js?v=20260726-3"></script>
-  <script src="./course/part-2.js?v=20260726-3"></script>
-  <script src="./course/part-3.js?v=20260726-3"></script>
-  <script src="./course/part-4.js?v=20260726-3"></script>
-  <script src="./course/part-5.js?v=20260726-3"></script>
-  <script src="./app.js?v=20260726-3"></script>
+  <script src="./course/part-1.js?v=20260726-4"></script>
+  <script src="./course/part-2.js?v=20260726-4"></script>
+  <script src="./course/part-3.js?v=20260726-4"></script>
+  <script src="./course/part-4.js?v=20260726-4"></script>
+  <script src="./course/part-5.js?v=20260726-4"></script>
+  <script src="./course/audience-copy.js?v=20260726-4"></script>
+  <script src="./app.js?v=20260726-4"></script>
 </body>
 </html>
