@@ -1,8 +1,10 @@
-const CACHE_NAME = 'adsp-mobile-v3-20260726-gzip';
+const CACHE_NAME = 'adsp-responsive-v3-20260726-v2';
+const ASSET_VERSION = '20260726-responsive-v2';
 const APP_FILES = [
   './',
   './index.html',
   './manifest.webmanifest',
+  './responsive.css?v=' + ASSET_VERSION,
   './parts/app01.gz.b64',
   './parts/app02.gz.b64',
   './parts/app03.gz.b64',
