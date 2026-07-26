@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7f8fc">
+  <title>ADsP 모바일 맞춤 학습 불러오는 중</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#f7f8fc;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;line-height:1.6}.card{width:min(100%,420px);padding:24px;border:1px solid #dce2ec;border-radius:20px;background:#fff;box-shadow:0 10px 28px rgba(22,36,72,.09)}h1{font-size:1.35rem;margin:0 0 8px}p{margin:0;color:#657087}.bar{height:8px;margin-top:18px;overflow:hidden;border-radius:999px;background:#dce2ec}.bar span{display:block;width:45%;height:100%;border-radius:inherit;background:#3157d5;animation:move 1s ease-in-out infinite alternate}@keyframes move{to{transform:translateX(120%)}}button{display:none;width:100%;min-height:48px;margin-top:16px;border:0;border-radius:12px;background:#3157d5;color:#fff;font:inherit;font-weight:800}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>ADsP 학습 페이지를 불러오고 있습니다.</h1>
+    <p id="status">잠시만 기다려 주세요.</p>
+    <div class="bar" id="bar"><span></span></div>
+    <button id="retry" type="button">다시 불러오기</button>
+  </main>
+  <script>
+    const PARTS = [
+      './parts/app01.gz.b64',
+      './parts/app02.gz.b64',
+      './parts/app03.gz.b64',
+      './parts/app04.gz.b64',
+      './parts/app05.gz.b64'
+    ];
+
+    async function loadApp() {
+      const status = document.getElementById('status');
+      const retry = document.getElementById('retry');
+      retry.style.display = 'none';
+      status.textContent = '학습 자료를 불러오고 있습니다.';
+      try {
+        if (!('DecompressionStream' in window)) {
+          throw new Error('이 Safari 버전에서는 압축 해제를 지원하지 않습니다.');
+        }
+        const responses = await Promise.all(PARTS.map(path => fetch(path, {cache:'no-cache'})));
+        responses.forEach(response => { if (!response.ok) throw new Error('파일을 불러오지 못했습니다.'); });
+        const encoded = (await Promise.all(responses.map(response => response.text()))).join('').replace(/\s/g, '');
+        const binary = atob(encoded);
+        const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+        const stream = new Response(bytes).body.pipeThrough(new DecompressionStream('gzip'));
+        const html = await new Response(stream).text();
+        document.open();
+        document.write(html);
+        document.close();
+      } catch (error) {
+        document.getElementById('bar').style.display = 'none';
+        status.textContent = error.message || '네트워크 연결을 확인한 뒤 다시 시도해 주세요.';
+        retry.style.display = 'block';
+      }
+    }
+    document.getElementById('retry').addEventListener('click', loadApp);
+    loadApp();
+  </script>
+</body>
+</html>
