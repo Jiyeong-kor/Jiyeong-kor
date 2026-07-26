@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="한능검 1급 훈련소 아이콘">
-  <rect width="512" height="512" rx="116" fill="#7a2f35"/>
-  <circle cx="256" cy="256" r="166" fill="#f5f1e8"/>
-  <path d="M153 150h206v45H153zm22 75h162v43H175zm-24 73h210v45H151zm85-155h43v226h-43z" fill="#7a2f35"/>
-  <path d="M177 371h158v37H177z" fill="#b47b20"/>
+  <rect width="512" height="512" rx="116" fill="#74343a"/>
+  <circle cx="256" cy="256" r="166" fill="#f3efe6"/>
+  <path d="M153 150h206v45H153zm22 75h162v43H175zm-24 73h210v45H151zm85-155h43v226h-43z" fill="#74343a"/>
+  <path d="M177 371h158v37H177z" fill="#a66d19"/>
 </svg>
