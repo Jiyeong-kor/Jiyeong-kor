@@ -4,7 +4,8 @@ const APP_FILES = [
   "./index.html",
   "./adsp/manifest.webmanifest",
   "./adsp/payload/part-01.gz.b64",
-  "./adsp/payload/part-02.gz.b64",
+  "./adsp/payload/part-02a.gz.b64",
+  "./adsp/payload/part-02b.gz.b64",
   "./adsp/payload/part-03.gz.b64",
   "./adsp/payload/part-04.gz.b64"
 ];
