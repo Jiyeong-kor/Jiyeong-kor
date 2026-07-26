@@ -1,0 +1,36 @@
+name: 한능검 사이트 검증
+
+on:
+  pull_request:
+    paths:
+      - "docs/history/**"
+      - "apps/korean-history-study/**"
+      - "scripts/verify_history_site.mjs"
+      - ".github/workflows/history-site-check.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/history/**"
+      - "apps/korean-history-study/**"
+      - "scripts/verify_history_site.mjs"
+      - ".github/workflows/history-site-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: 한능검 학습 사이트 검증
+        run: node scripts/verify_history_site.mjs
