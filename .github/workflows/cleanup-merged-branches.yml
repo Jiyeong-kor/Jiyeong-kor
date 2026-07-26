@@ -1,0 +1,88 @@
+name: 병합 브랜치 자동 정리
+
+on:
+  pull_request:
+    types:
+      - closed
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: merged-branch-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    if: github.event_name != 'pull_request' || github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: 병합된 작업 브랜치 삭제
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const allowedPrefix = /^(agent|feature|fix|chore|refactor|docs)\//;
+
+            const repository = await github.rest.repos.get({ owner, repo });
+            const defaultBranch = repository.data.default_branch;
+            const branches = await github.paginate(
+              github.rest.repos.listBranches,
+              { owner, repo, per_page: 100 }
+            );
+
+            for (const branch of branches) {
+              const name = branch.name;
+
+              if (name === defaultBranch || branch.protected || !allowedPrefix.test(name)) {
+                continue;
+              }
+
+              const openPulls = await github.rest.pulls.list({
+                owner,
+                repo,
+                state: 'open',
+                head: `${owner}:${name}`,
+                per_page: 1
+              });
+
+              if (openPulls.data.length > 0) {
+                core.info(`열린 PR이 있어서 유지합니다: ${name}`);
+                continue;
+              }
+
+              const closedPulls = await github.rest.pulls.list({
+                owner,
+                repo,
+                state: 'closed',
+                head: `${owner}:${name}`,
+                per_page: 100
+              });
+
+              const wasMerged = closedPulls.data.some(pull => Boolean(pull.merged_at));
+              if (!wasMerged) {
+                core.info(`병합 기록이 없어서 유지합니다: ${name}`);
+                continue;
+              }
+
+              try {
+                await github.rest.git.deleteRef({
+                  owner,
+                  repo,
+                  ref: `heads/${name}`
+                });
+                core.info(`삭제했습니다: ${name}`);
+              } catch (error) {
+                if (error.status === 422 || error.status === 404) {
+                  core.info(`이미 삭제되었거나 삭제할 수 없는 브랜치입니다: ${name}`);
+                  continue;
+                }
+                throw error;
+              }
+            }
