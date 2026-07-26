@@ -30,12 +30,23 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: 저장소 체크아웃
-        uses: actions/checkout@v4
-
-      - name: Node.js 설정
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+        shell: bash
+        run: |
+          git init -q
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            git fetch -q --depth=1 origin "+refs/pull/${{ github.event.pull_request.number }}/merge:refs/remotes/origin/pr-merge"
+            git checkout -q refs/remotes/origin/pr-merge
+          else
+            git fetch -q --depth=1 origin "${GITHUB_SHA}"
+            git checkout -q FETCH_HEAD
+          fi
 
       - name: 한능검 학습 사이트 검증
-        run: node scripts/verify_history_site.mjs
+        shell: bash
+        run: |
+          set +e
+          output="$(node scripts/verify_history_site.mjs 2>&1)"
+          status=$?
+          printf '%s\n' "$output" | tail -n 80
+          exit "$status"
