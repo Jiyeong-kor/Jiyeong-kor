@@ -7,7 +7,11 @@ const APP_FILES = [
   './adsp/manifest.webmanifest',
   './adsp/payload/part-01.gz.b64?v=' + ASSET_VERSION,
   './adsp/payload/part-02.gz.b64?v=' + ASSET_VERSION,
-  './adsp/payload/part-03.gz.b64?v=' + ASSET_VERSION
+  './adsp/payload/part-03.gz.b64?v=' + ASSET_VERSION,
+  './adsp/payload/part-04.gz.b64?v=' + ASSET_VERSION,
+  './adsp/payload/part-05.gz.b64?v=' + ASSET_VERSION,
+  './adsp/payload/part-06.gz.b64?v=' + ASSET_VERSION,
+  './adsp/payload/part-07.gz.b64?v=' + ASSET_VERSION
 ];
 
 self.addEventListener('install', event => {
