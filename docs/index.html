@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#f7f8fc">
-  <title>ADsP 모바일 맞춤 학습 불러오는 중</title>
+  <title>ADsP 맞춤 학습 불러오는 중</title>
   <style>
     *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:#f7f8fc;color:#172033;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;line-height:1.6}.card{width:min(100%,420px);padding:24px;border:1px solid #dce2ec;border-radius:20px;background:#fff;box-shadow:0 10px 28px rgba(22,36,72,.09)}h1{font-size:1.35rem;margin:0 0 8px}p{margin:0;color:#657087}.bar{height:8px;margin-top:18px;overflow:hidden;border-radius:999px;background:#dce2ec}.bar span{display:block;width:45%;height:100%;border-radius:inherit;background:#3157d5;animation:move 1s ease-in-out infinite alternate}@keyframes move{to{transform:translateX(120%)}}button{display:none;width:100%;min-height:48px;margin-top:16px;border:0;border-radius:12px;background:#3157d5;color:#fff;font:inherit;font-weight:800}
   </style>
@@ -12,11 +12,13 @@
 <body>
   <main class="card">
     <h1>ADsP 학습 페이지를 불러오고 있습니다.</h1>
-    <p id="status">잠시만 기다려 주세요.</p>
+    <p id="status">화면 크기에 맞는 학습 환경을 준비하고 있습니다.</p>
     <div class="bar" id="bar"><span></span></div>
     <button id="retry" type="button">다시 불러오기</button>
   </main>
   <script>
+    const ASSET_VERSION = '20260726-responsive-v2';
+    const STYLE_PATH = './responsive.css?v=' + ASSET_VERSION;
     const PARTS = [
       './parts/app01.gz.b64',
       './parts/app02.gz.b64',
@@ -25,6 +27,27 @@
       './parts/app05.gz.b64'
     ];
 
+    function adaptForAllScreens(source, responsiveCss) {
+      const replacements = [
+        ['<title>ADsP 아이폰 Safari 맞춤 학습 v3</title>', '<title>ADsP 맞춤 학습 v3</title>'],
+        ['<div class="app-title">ADsP 아이폰 Safari 맞춤 학습 v3</div>', '<div class="app-title">ADsP 맞춤 학습 v3</div>'],
+        ['오프라인 단일 HTML · 자동 저장 · 결과 공유', '화면 자동 최적화 · 자동 저장 · 결과 공유'],
+        ['2026년 8월 8일 시험 · ${daysUntilExam()} · 아이폰 Safari 전용', '2026년 8월 8일 시험 · ${daysUntilExam()} · 화면 자동 최적화'],
+        ['남은 약점 교정과 3과목 이론을 모바일에서 이어갑니다.', '남은 약점 교정과 3과목 이론을 화면 크기에 맞춰 이어갑니다.'],
+        ['<div class="section-title"><h2>아이폰에서 사용하는 방법</h2><p>Safari에서 열어 둔 상태로 학습하면 됩니다.</p></div>', '<div class="section-title"><h2>학습·저장 방법</h2><p>모바일, 태블릿, PC에서 같은 주소로 학습할 수 있습니다.</p></div>'],
+        ['문제를 풀 때마다 Safari의 저장 공간에 진행 상황이 자동 저장됩니다.', '문제를 풀 때마다 현재 브라우저의 저장 공간에 진행 상황이 자동 저장됩니다.'],
+        ['학습을 마치면 하단의 <strong>저장</strong>을 누르고 공유 메뉴에서 <strong>파일에 저장</strong>을 선택합니다.', '학습을 마치면 하단의 <strong>저장</strong>을 눌러 결과 JSON을 보관합니다. 아이폰 Safari에서는 공유 메뉴의 <strong>파일에 저장</strong>을 선택합니다.'],
+        ['Safari의 개인정보 보호 브라우징에서는 자동 저장이 지워질 수 있습니다. 학습을 중단할 때에는 결과 파일을 별도로 저장하는 편이 안전합니다.', '개인정보 보호 브라우징을 사용하거나 브라우저 저장 공간을 정리하면 자동 저장 기록이 사라질 수 있습니다. 학습을 중단할 때에는 결과 파일을 별도로 저장하는 편이 안전합니다.'],
+        ["showToast('Safari에 자동 저장했습니다.');", "showToast('브라우저에 자동 저장했습니다.');"]
+      ];
+
+      let html = source;
+      replacements.forEach(([before, after]) => {
+        html = html.replace(before, after);
+      });
+      return html.replace('</head>', '<style id="responsive-layout">' + responsiveCss + '</style></head>');
+    }
+
     async function loadApp() {
       const status = document.getElementById('status');
       const retry = document.getElementById('retry');
@@ -32,15 +55,26 @@
       status.textContent = '학습 자료를 불러오고 있습니다.';
       try {
         if (!('DecompressionStream' in window)) {
-          throw new Error('이 Safari 버전에서는 압축 해제를 지원하지 않습니다.');
+          throw new Error('현재 브라우저에서는 학습 자료의 압축 해제를 지원하지 않습니다.');
         }
-        const responses = await Promise.all(PARTS.map(path => fetch(path, {cache:'no-cache'})));
-        responses.forEach(response => { if (!response.ok) throw new Error('파일을 불러오지 못했습니다.'); });
+
+        const [responses, styleResponse] = await Promise.all([
+          Promise.all(PARTS.map(path => fetch(path, {cache:'no-cache'}))),
+          fetch(STYLE_PATH, {cache:'no-cache'})
+        ]);
+        responses.forEach(response => {
+          if (!response.ok) throw new Error('학습 자료를 불러오지 못했습니다.');
+        });
+        if (!styleResponse.ok) throw new Error('반응형 화면 설정을 불러오지 못했습니다.');
+
         const encoded = (await Promise.all(responses.map(response => response.text()))).join('').replace(/\s/g, '');
         const binary = atob(encoded);
         const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
         const stream = new Response(bytes).body.pipeThrough(new DecompressionStream('gzip'));
-        const html = await new Response(stream).text();
+        const source = await new Response(stream).text();
+        const responsiveCss = await styleResponse.text();
+        const html = adaptForAllScreens(source, responsiveCss);
+
         document.open();
         document.write(html);
         document.close();
@@ -50,6 +84,7 @@
         retry.style.display = 'block';
       }
     }
+
     document.getElementById('retry').addEventListener('click', loadApp);
     loadApp();
   </script>

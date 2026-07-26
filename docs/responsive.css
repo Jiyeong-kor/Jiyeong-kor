@@ -1,0 +1,152 @@
+/* 모바일의 한 열 흐름을 유지하면서 태블릿과 PC에서는 가용 폭을 활용합니다. */
+.topbar-inner,
+.main,
+.hero,
+.card,
+.theory,
+.question-card,
+.module-card,
+.report-row,
+.metric-card,
+.choice,
+.drawer-item {
+  min-width: 0;
+}
+
+@media (min-width: 720px) {
+  .topbar-inner,
+  .main {
+    max-width: 920px;
+  }
+
+  .main {
+    padding: 24px 24px calc(112px + env(safe-area-inset-bottom));
+  }
+
+  .hero {
+    padding: 30px;
+  }
+
+  .module-list,
+  .report-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .ios-guide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .actions .button {
+    flex: 0 0 auto;
+    min-width: 168px;
+  }
+
+  .bottom-nav {
+    left: 50%;
+    right: auto;
+    width: min(920px, calc(100% - 32px));
+    transform: translateX(-50%);
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
+    border-radius: 16px 16px 0 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  body {
+    font-size: 17px;
+  }
+
+  .topbar {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+
+  .topbar-inner,
+  .main {
+    max-width: 1180px;
+  }
+
+  .main {
+    padding: 30px 28px 124px;
+  }
+
+  .hero {
+    padding: 36px 38px;
+  }
+
+  .hero h1 {
+    max-width: 920px;
+  }
+
+  .hero .lead {
+    max-width: 980px;
+  }
+
+  .card,
+  .theory,
+  .question-card {
+    padding: 28px;
+  }
+
+  .section {
+    margin-top: 40px;
+  }
+
+  .module-list {
+    gap: 16px;
+  }
+
+  .module-card {
+    padding: 21px;
+  }
+
+  .report-list {
+    gap: 14px;
+  }
+
+  .choices {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .choice {
+    height: 100%;
+    padding: 15px 16px;
+  }
+
+  .question-prompt {
+    max-width: 980px;
+    font-size: 1.15rem;
+  }
+
+  .question-nav {
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .theory > p,
+  details.review > div > p {
+    max-width: 980px;
+  }
+
+  .bottom-nav {
+    width: min(1180px, calc(100% - 48px));
+  }
+}
+
+@media (min-width: 1380px) {
+  .topbar-inner,
+  .main {
+    max-width: 1320px;
+  }
+
+  .module-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .bottom-nav {
+    width: min(1320px, calc(100% - 64px));
+  }
+}
