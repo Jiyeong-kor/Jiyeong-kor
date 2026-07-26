@@ -1,7 +1,7 @@
 {
-  "name": "ADsP 맞춤 학습",
+  "name": "ADsP 개념 재구성 맞춤 학습",
   "short_name": "ADsP 학습",
-  "description": "모바일, 태블릿, PC 화면에 맞춰 자동 조정되는 ADsP 맞춤 학습 페이지",
+  "description": "영문 시험 용어, 한자 뜻, 선행 개념과 공식을 기초부터 학습하는 반응형 ADsP 맞춤 학습 페이지",
   "lang": "ko-KR",
   "start_url": "../",
   "scope": "../",
