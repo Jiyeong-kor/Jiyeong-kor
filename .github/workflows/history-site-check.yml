@@ -6,8 +6,6 @@ on:
       - "docs/history/**"
       - "apps/korean-history-study/**"
       - "scripts/verify_history_site.mjs"
-      - ".history-quality-upload/**"
-      - ".github/workflows/history-quality-apply-once.yml"
       - ".github/workflows/history-site-check.yml"
   push:
     branches:
@@ -20,7 +18,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: history-site-${{ github.workflow }}-${{ github.ref }}
@@ -30,66 +28,14 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    env:
-      HEAD_BRANCH: ${{ github.head_ref || github.ref_name }}
-      GH_TOKEN: ${{ github.token }}
     steps:
-      - name: 작업 브랜치 가져오기
-        shell: bash
-        run: |
-          git init -q
-          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          git fetch -q --depth=2 origin "refs/heads/${HEAD_BRANCH}:refs/remotes/origin/work"
-          git checkout -q -B "${HEAD_BRANCH}" refs/remotes/origin/work
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
 
-      - name: 품질 개편 자산 적용
-        shell: bash
-        run: |
-          set -euo pipefail
-          if ! compgen -G ".history-quality-upload/part-*.b64" > /dev/null; then
-            echo "업로드 조각 없음"
-            exit 0
-          fi
-          for file in .history-quality-upload/part-*.b64; do
-            echo "$(basename "${file}") bytes=$(wc -c < "${file}")"
-          done
-          cat .history-quality-upload/part-*.b64 | tr -d '\r\n\t ' > /tmp/history-quality-v3.b64
-          echo "base64_chars=$(wc -c < /tmp/history-quality-v3.b64)"
-          python - <<'PY'
-          from pathlib import Path
-          import base64
-          source = Path('/tmp/history-quality-v3.b64').read_text(encoding='ascii')
-          print(f'base64_mod4={len(source) % 4}')
-          Path('/tmp/history-quality-v3.tar.gz').write_bytes(base64.b64decode(source, validate=True))
-          PY
-          actual="$(sha256sum /tmp/history-quality-v3.tar.gz | cut -d' ' -f1)"
-          expected="9aab84c37c1da95c4342305f1d99bb27dfa8bb2b647e6b6a6336b1e0cab40bf1"
-          echo "archive_bytes=$(wc -c < /tmp/history-quality-v3.tar.gz)"
-          echo "archive_sha256=${actual}"
-          test "${actual}" = "${expected}"
-          tar -tzf /tmp/history-quality-v3.tar.gz | sort
-          tar -xzf /tmp/history-quality-v3.tar.gz
-          rm -rf .history-quality-upload
-          rm -f .github/workflows/history-quality-apply-once.yml
-          git fetch -q origin main
-          git checkout origin/main -- .github/workflows/history-site-check.yml
+      - name: Node.js 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
       - name: 한능검 학습 사이트 검증
-        shell: bash
-        run: |
-          node --check docs/history/data.js
-          node --check docs/history/app.js
-          node scripts/verify_history_site.mjs
-
-      - name: 검증된 품질 개편 자산 커밋
-        if: github.event_name == 'pull_request'
-        shell: bash
-        run: |
-          if git diff --quiet && git diff --cached --quiet; then
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "feat: 한능검 문제 품질과 검증 체계 개편"
-          git push -q origin HEAD:"${HEAD_BRANCH}"
+        run: node scripts/verify_history_site.mjs

@@ -1,11 +1,11 @@
-const CACHE_NAME = 'history-grade1-20260727-1';
+const CACHE_NAME = 'history-grade1-20260727-2';
 const ASSETS = [
   './',
   './index.html',
-  './styles.css?v=20260727-1',
-  './data.js?v=20260727-1',
-  './app.js?v=20260727-1',
-  './manifest.webmanifest',
+  './styles.css?v=20260727-2',
+  './data.js?v=20260727-2',
+  './app.js?v=20260727-2',
+  './manifest.webmanifest?v=20260727-2',
   './icon.svg'
 ];
 

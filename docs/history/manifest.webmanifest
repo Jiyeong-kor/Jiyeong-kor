@@ -1,10 +1,10 @@
 {
   "name": "한능검 1급 훈련소",
   "short_name": "한능검 1급",
-  "description": "한국사능력검정시험 심화 1급 대비 개념·예상 문제·오답 복습·실전 모의고사",
+  "description": "127개 핵심 개념과 2,540개 훈련 문항, 고정형 실전 모의고사로 한국사능력검정시험 심화 1급을 준비합니다.",
   "lang": "ko-KR",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/Jiyeong-kor/history/",
+  "scope": "/Jiyeong-kor/history/",
   "display": "standalone",
   "background_color": "#f3efe6",
   "theme_color": "#f3efe6",
@@ -15,5 +15,6 @@
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
-  ]
+  ],
+  "id": "/Jiyeong-kor/history/"
 }

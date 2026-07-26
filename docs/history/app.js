@@ -6,17 +6,24 @@
     throw new Error('한국사 학습 데이터를 불러오지 못했습니다.');
   }
 
-  const STORAGE_KEY = 'korean-history-grade1-state-v2';
-  const DIFFICULTY_PATTERN = [
-    '보통', '어려움', '쉬움', '보통', '쉬움',
-    '보통', '보통', '쉬움', '어려움', '어려움',
-    '보통', '어려움', '쉬움', '보통', '쉬움',
-    '보통', '어려움', '쉬움', '어려움', '보통'
-  ];
+  const STORAGE_KEY = 'korean-history-grade1-state-v3';
   const POINTS = { '쉬움': 1, '보통': 2, '어려움': 3 };
+  const DIFFICULTY_PATTERN = [
+    '쉬움', '보통', '쉬움', '보통', '쉬움',
+    '보통', '어려움', '어려움', '어려움', '보통',
+    '보통', '보통', '보통', '어려움', '보통',
+    '보통', '어려움', '보통', '어려움', '보통'
+  ];
+  const CORE_LABEL = DATA.qualityPolicy?.coreQuestionLabel || '핵심 문항';
+  const REPEAT_LABEL = DATA.qualityPolicy?.repeatQuestionLabel || '심화 반복';
   const FACT_MAP = new Map(DATA.facts.map(item => [item.id, item]));
   const ERAS = [...new Set(DATA.facts.map(item => item.era))];
   const CATEGORIES = [...new Set(DATA.facts.map(item => item.category))];
+  const QUESTION_TYPES = ['자료 추론', '지식 확인', '오답 선지 판별', '시대 판단', '연결 판단', '탐구 설계', '결론 도출', '연대기 배열', '시대 비교'];
+  const LESSON_MAP = new Map(DATA.lessons.map(lesson => [lesson.number, lesson]));
+  const CONFUSION_SETS = DATA.confusionSets.map(ids => ids.map(id => FACT_MAP.get(id)).filter(Boolean));
+  const CHRONOLOGY_SETS = DATA.chronologySets.map(ids => ids.map(id => FACT_MAP.get(id)).filter(Boolean));
+  const FACT_INDEX = new Map(DATA.facts.map((item, index) => [item.id, index]));
 
   function hashString(value) {
     let hash = 2166136261;
@@ -81,18 +88,113 @@
     return `${value}${particle(value, '을/를')}`;
   }
 
+  function coordinate(value) {
+    return `${value}${particle(value, '과/와')}`;
+  }
+
   function yearLabel(year) {
     if (year < 0) return `기원전 ${Math.abs(year).toLocaleString('ko-KR')}년 무렵`;
     return `${year}년 무렵`;
   }
 
-  function distractorFacts(fact, count, seedText, predicate = () => true) {
-    const sameEra = DATA.facts.filter(item => item.id !== fact.id && item.era === fact.era && predicate(item));
-    const adjacent = DATA.facts.filter(item => item.id !== fact.id && item.era !== fact.era && predicate(item));
-    return uniqueBy(
-      [...seededShuffle(sameEra, `${seedText}-same`), ...seededShuffle(adjacent, `${seedText}-all`)],
-      item => item.id
-    ).slice(0, count);
+  function lessonFor(fact) {
+    return LESSON_MAP.get(fact.lesson) || { number: fact.lesson, title: '통합 학습' };
+  }
+
+  function relatedFacts(fact, count, seedText) {
+    const inSets = CONFUSION_SETS
+      .filter(set => set.some(item => item.id === fact.id))
+      .flat()
+      .filter(item => item.id !== fact.id && item.era === fact.era);
+    const sameLesson = DATA.facts.filter(item => item.id !== fact.id && item.lesson === fact.lesson && item.era === fact.era);
+    const sameEraCategory = DATA.facts.filter(item => item.id !== fact.id && item.era === fact.era && item.category === fact.category);
+    const sameEra = DATA.facts.filter(item => item.id !== fact.id && item.era === fact.era);
+    const pool = uniqueBy([
+      ...inSets,
+      ...sameLesson,
+      ...sameEraCategory,
+      ...sameEra
+    ], item => item.id);
+    const ranked = pool
+      .map(item => ({
+        item,
+        score:
+          (item.lesson === fact.lesson ? 0 : 500) +
+          (item.category === fact.category ? 0 : 120) +
+          Math.abs((item.lesson || 0) - (fact.lesson || 0)) * 15 +
+          Math.abs((FACT_INDEX.get(item.id) || 0) - (FACT_INDEX.get(fact.id) || 0))
+      }))
+      .sort((a, b) => a.score - b.score || a.item.title.localeCompare(b.item.title, 'ko'));
+    const shortlist = ranked.slice(0, Math.max(count * 2, count)).map(entry => entry.item);
+    const selected = seededShuffle(shortlist, seedText).slice(0, count);
+    if (selected.length !== count) {
+      throw new Error(`${fact.id}의 같은 시대 혼동 개념이 부족합니다.`);
+    }
+    return selected;
+  }
+
+  function usableClues(fact) {
+    const clean = fact.clues.filter(clue => !clue.includes(fact.title));
+    return clean.length >= 2 ? clean : fact.clues;
+  }
+
+  const TOKEN_STOPWORDS = new Set([
+    '해당합니다', '했습니다', '되었습니다', '있었습니다', '추진했습니다', '실시했습니다',
+    '설치했습니다', '운영했습니다', '정비했습니다', '강화했습니다', '확대되었습니다',
+    '중심으로', '통해', '위해', '대한', '관련', '제도', '정책', '국가', '사회', '지역',
+    '관리', '왕권', '활동', '운동', '과정', '시대', '사용했습니다'
+  ]);
+
+  function textTokens(value) {
+    return new Set(
+      (String(value).match(/[가-힣A-Za-z0-9·]+/g) || [])
+        .map(token => token.replace(/(했습니다|되었습니다|입니다|였습니다|하였다|했다|되었다|하였다)$/u, ''))
+        .filter(token => token.length >= 2 && !TOKEN_STOPWORDS.has(token))
+    );
+  }
+
+  function tokenOverlap(left, right) {
+    const leftTokens = textTokens(left);
+    const rightTokens = textTokens(right);
+    if (!leftTokens.size || !rightTokens.size) return 0;
+    let common = 0;
+    for (const token of leftTokens) if (rightTokens.has(token)) common += 1;
+    return common / Math.min(leftTokens.size, rightTokens.size);
+  }
+
+  function factText(fact) {
+    return [fact.title, fact.summary, ...fact.clues].join(' ');
+  }
+
+  function distinctiveClue(sourceFact, againstFact, seedText) {
+    const ranked = usableClues(sourceFact)
+      .map((clue, index) => ({ clue, index, overlap: tokenOverlap(clue, factText(againstFact)) }))
+      .sort((a, b) => a.overlap - b.overlap || a.index - b.index);
+    const bestScore = ranked[0]?.overlap ?? 0;
+    const shortlist = ranked.filter(item => item.overlap <= Math.min(0.34, bestScore + 0.08));
+    return seededShuffle(shortlist.length ? shortlist : ranked, seedText)[0].clue;
+  }
+
+  function chooseClues(fact, indexes) {
+    const clues = usableClues(fact);
+    return uniqueBy(indexes.map(index => clues[index % clues.length]), value => value);
+  }
+
+  function eraSafeClues(fact, indexes) {
+    const eraToken = fact.era.replace(' 전기', '').replace(' 후기', '').replace('·가야', '').trim();
+    const candidates = usableClues(fact).filter(clue => !eraToken || !clue.includes(eraToken));
+    const source = candidates.length >= 2 ? candidates : usableClues(fact).map(clue => clue.replaceAll(eraToken, '이 시기'));
+    return uniqueBy(indexes.map(index => source[index % source.length]), value => value);
+  }
+
+  function eraDistractors(fact, seedText) {
+    const index = ERAS.indexOf(fact.era);
+    const ranked = ERAS
+      .filter(era => era !== fact.era)
+      .map(era => ({ era, distance: Math.abs(ERAS.indexOf(era) - index) }))
+      .sort((a, b) => a.distance - b.distance || a.era.localeCompare(b.era, 'ko'));
+    const near = ranked.slice(0, 6).map(item => item.era);
+    return seededShuffle(near, seedText).slice(0, 4);
   }
 
   function finalizeQuestion(base, optionObjects, seedText) {
@@ -109,26 +211,29 @@
       ...base,
       options: shuffled.map(option => option.text),
       explanations: shuffled.map(option => option.explanation),
+      optionFactIds: shuffled.map(option => option.factId || null),
       answerIndex
     };
   }
 
   function clueToTitle(fact, variant, cycle) {
-    const clueIndexes = cycle === 0
-      ? [variant % 4, (variant + 1) % 4]
-      : [(variant + 2) % 4, (variant + 3) % 4, variant % 4];
-    const selectedClues = uniqueBy(clueIndexes.map(index => fact.clues[index]), value => value);
-    const distractors = distractorFacts(fact, 4, `clue-title-${fact.id}-${variant}`);
+    const indexes = cycle === 0
+      ? (variant % 2 === 0 ? [0, 3] : [1, 2])
+      : (variant % 2 === 0 ? [1, 2, 3] : [0, 2, 3]);
+    const selectedClues = chooseClues(fact, indexes);
+    const distractors = relatedFacts(fact, 4, `identify-${fact.id}-${variant}`);
     const options = [
       {
         text: fact.title,
         correct: true,
-        explanation: `${topic(fact.title)} 제시된 단서를 모두 충족합니다. ${fact.summary}`
+        factId: fact.id,
+        explanation: fact.summary
       },
       ...distractors.map(item => ({
         text: item.title,
         correct: false,
-        explanation: `${topic(item.title)} ${item.summary}`
+        factId: item.id,
+        explanation: item.summary
       }))
     ];
     return {
@@ -138,73 +243,74 @@
       stimulus: selectedClues.map(clue => `• ${clue}`).join('\n'),
       type: '자료 추론',
       officialType: '역사 자료의 분석 및 해석',
+      relatedFactIds: distractors.map(item => item.id),
       options
     };
   }
 
   function correctClue(fact, variant, cycle) {
-    const correctClueText = fact.clues[(variant + cycle) % 4];
-    const otherClues = uniqueBy(
-      seededShuffle(
-        DATA.facts
-          .filter(item => item.id !== fact.id)
-          .flatMap(item => item.clues.map(clue => ({ clue, fact: item }))),
-        `correct-clue-${fact.id}-${variant}`
-      ),
-      item => item.clue
-    ).filter(item => !fact.clues.includes(item.clue)).slice(0, 4);
+    const clues = usableClues(fact);
+    const correctClueText = clues[(cycle * 2 + variant) % clues.length];
+    const distractors = relatedFacts(fact, 4, `correct-clue-${fact.id}-${variant}`);
     const options = [
       {
         text: correctClueText,
         correct: true,
+        factId: fact.id,
         explanation: `이 설명은 ${fact.title}의 핵심 단서입니다.`
       },
-      ...otherClues.map(item => ({
-        text: item.clue,
+      ...distractors.map((item, index) => ({
+        text: distinctiveClue(item, fact, `correct-clue-text-${fact.id}-${item.id}-${variant}-${index}`),
         correct: false,
-        explanation: `이 설명은 ${item.fact.title}에 해당합니다.`
+        factId: item.id,
+        explanation: `이 설명은 ${item.title}에 해당합니다.`
       }))
     ];
     return {
       prompt: `${fact.title}에 관한 설명으로 옳은 것은?`,
-      stimulus: cycle === 0 ? fact.summary : `시대: ${fact.era} · 주제: ${fact.category}`,
+      stimulus: `제${lessonFor(fact).number}강 ${lessonFor(fact).title} 범위에서 판단하세요.`,
       type: '지식 확인',
       officialType: '역사 지식의 이해',
+      relatedFactIds: distractors.map(item => item.id),
       options
     };
   }
 
   function wrongClue(fact, variant, cycle) {
-    const outsider = seededShuffle(
-      DATA.facts
-        .filter(item => item.id !== fact.id)
-        .flatMap(item => item.clues.map(clue => ({ clue, fact: item })))
-        .filter(item => !fact.clues.includes(item.clue)),
-      `wrong-clue-${fact.id}-${variant}`
-    )[0];
+    const related = relatedFacts(fact, 4, `wrong-clue-${fact.id}-${variant}`);
+    const outsider = related[(variant + cycle) % related.length];
+    const outsiderClue = distinctiveClue(outsider, fact, `wrong-clue-text-${fact.id}-${outsider.id}-${variant}`);
     const options = [
       ...fact.clues.map(clue => ({
         text: clue,
         correct: false,
+        factId: fact.id,
         explanation: `이 설명은 ${fact.title}의 핵심 단서이므로 옳습니다.`
       })),
       {
-        text: outsider.clue,
+        text: outsiderClue,
         correct: true,
-        explanation: `${topic(`“${outsider.clue}”`)} ${outsider.fact.title}의 내용입니다.`
+        factId: outsider.id,
+        explanation: `${topic(`“${outsiderClue}”`)} ${outsider.title}의 내용입니다.`
       }
     ];
     return {
-      prompt: `${fact.title}에 관한 설명으로 옳지 않은 것은?`,
-      stimulus: cycle === 0 ? '네 개의 핵심 단서와 다른 시대·주제의 단서 하나를 구분하세요.' : fact.summary,
+      prompt: cycle === 0
+        ? `${fact.title}에 관한 설명으로 옳지 않은 것은?`
+        : `${fact.title}과 관련된 설명을 검토한 결과, 적절하지 않은 것은?`,
+      stimulus: cycle === 0
+        ? '같은 시대의 혼동 개념이 한 선택지에 포함되어 있습니다.'
+        : '핵심 단서 네 개와 인접 개념의 단서 하나를 구분하세요.',
       type: '오답 선지 판별',
       officialType: '역사 지식의 이해',
+      relatedFactIds: [outsider.id],
       options
     };
   }
 
   function eraQuestion(fact, variant, cycle) {
-    const distractors = seededShuffle(ERAS.filter(era => era !== fact.era), `era-${fact.id}-${variant}`).slice(0, 4);
+    const selectedClues = eraSafeClues(fact, cycle === 0 ? [0, 2] : [1, 3]);
+    const distractors = eraDistractors(fact, `era-${fact.id}-${variant}`);
     const options = [
       {
         text: fact.era,
@@ -214,145 +320,217 @@
       ...distractors.map(era => ({
         text: era,
         correct: false,
-        explanation: `${era}가 아니라 ${fact.era}에 해당합니다.`
+        explanation: `제시된 단서는 ${subject(era)} 아니라 ${fact.era}에 해당합니다.`
       }))
     ];
     return {
       prompt: cycle === 0
-        ? '다음 역사적 사실이 속하는 시대는?'
-        : '다음 자료를 연대기상 어느 시대에 배치해야 하는가?',
-      stimulus: `${fact.title}\n${fact.clues[(variant + 1) % 4]}`,
+        ? '다음 자료가 나타내는 시대는?'
+        : '다음 자료를 한국사의 흐름에서 어느 시기에 배치해야 하는가?',
+      stimulus: selectedClues.map(clue => `• ${clue}`).join('\n'),
       type: '시대 판단',
       officialType: '연대기의 파악',
+      relatedFactIds: [],
       options
     };
   }
 
-  function chronologyQuestion(fact, variant, cycle) {
-    const candidates = uniqueBy(
-      [fact, ...seededShuffle(DATA.facts.filter(item => item.id !== fact.id), `chronology-${fact.id}-${variant}`)],
-      item => item.year
-    ).slice(0, 5);
-    if (candidates.length < 5) {
-      throw new Error(`연대기 후보가 부족합니다: ${fact.id}`);
-    }
-    const askLatest = cycle === 1;
-    const correct = [...candidates].sort((a, b) => askLatest ? b.year - a.year : a.year - b.year)[0];
-    const options = candidates.map(item => ({
-      text: item.title,
-      correct: item.id === correct.id,
-      explanation: `${topic(item.title)} ${yearLabel(item.year)}에 해당합니다.`
-    }));
-    return {
-      prompt: askLatest ? '다음 중 가장 나중에 나타난 역사적 사실은?' : '다음 중 가장 먼저 나타난 역사적 사실은?',
-      stimulus: '각 항목의 대표 연도를 기준으로 선후 관계를 판단하세요.',
-      type: '연대기 배열',
-      officialType: '연대기의 파악',
-      options
-    };
-  }
-
-  function situationQuestion(fact, variant, cycle) {
-    const distractors = distractorFacts(fact, 4, `situation-${fact.id}-${variant}`);
-    const options = [
-      {
-        text: fact.title,
-        correct: true,
-        explanation: `${topic(fact.title)} 제시된 상황과 일치합니다.`
-      },
-      ...distractors.map(item => ({
-        text: item.title,
+  function pairCorrectQuestion(fact, variant, cycle) {
+    const related = relatedFacts(fact, 4, `pair-correct-${fact.id}-${variant}`);
+    const wrongPairs = related.map((titleFact, index) => {
+      const clueFact = related[(index + 1) % related.length];
+      const clue = distinctiveClue(clueFact, titleFact, `pair-correct-text-${fact.id}-${variant}-${index}`);
+      return {
+        text: `${titleFact.title} — ${clue}`,
         correct: false,
-        explanation: `${topic(item.title)} ${item.summary}`
-      }))
-    ];
+        factId: titleFact.id,
+        explanation: `이 단서는 ${subject(titleFact.title)} 아니라 ${clueFact.title}에 해당합니다.`
+      };
+    });
+    const correctClueText = usableClues(fact)[(variant + cycle) % usableClues(fact).length];
     return {
-      prompt: cycle === 0
-        ? '다음 상황과 직접 관련된 역사적 사실은?'
-        : '다음 변화가 나타난 배경을 파악할 때 중심에 놓아야 할 주제는?',
-      stimulus: fact.summary,
-      type: '상황·쟁점 판단',
+      prompt: '역사적 사실과 설명을 바르게 연결한 것은?',
+      stimulus: `제${lessonFor(fact).number}강 ${lessonFor(fact).title}의 혼동 개념을 구분하세요.`,
+      type: '연결 판단',
+      officialType: '역사 지식의 이해',
+      relatedFactIds: related.map(item => item.id),
+      options: [
+        {
+          text: `${fact.title} — ${correctClueText}`,
+          correct: true,
+          factId: fact.id,
+          explanation: `${topic(fact.title)} 해당 설명과 바르게 연결됩니다.`
+        },
+        ...wrongPairs
+      ]
+    };
+  }
+
+  function pairIncorrectQuestion(fact, variant, cycle) {
+    const related = relatedFacts(fact, 4, `pair-wrong-${fact.id}-${variant}`);
+    const facts = [fact, ...related];
+    const mismatchIndex = (variant + cycle) % facts.length;
+    const options = facts.map((titleFact, index) => {
+      const isMismatch = index === mismatchIndex;
+      const clueFact = isMismatch ? facts[(index + 1) % facts.length] : titleFact;
+      const clue = isMismatch
+        ? distinctiveClue(clueFact, titleFact, `pair-wrong-text-${fact.id}-${variant}-${index}`)
+        : usableClues(titleFact)[(variant + index + cycle) % usableClues(titleFact).length];
+      return {
+        text: `${titleFact.title} — ${clue}`,
+        correct: isMismatch,
+        factId: titleFact.id,
+        explanation: isMismatch
+          ? `이 단서는 ${subject(titleFact.title)} 아니라 ${clueFact.title}에 해당하므로 연결이 옳지 않습니다.`
+          : `${topic(titleFact.title)} 해당 설명과 바르게 연결됩니다.`
+      };
+    });
+    return {
+      prompt: '역사적 사실과 설명의 연결이 옳지 않은 것은?',
+      stimulus: '같은 시대·주제에서 자주 혼동하는 연결을 확인하세요.',
+      type: '연결 판단',
       officialType: '역사 상황 및 쟁점의 인식',
+      relatedFactIds: related.map(item => item.id),
       options
     };
   }
 
   function inquiryQuestion(fact, variant, cycle) {
-    const correctClues = [
-      fact.clues[(variant + cycle) % 4],
-      fact.clues[(variant + cycle + 2) % 4]
-    ];
-    const distractors = distractorFacts(fact, 4, `inquiry-${fact.id}-${variant}`);
+    const correctClues = chooseClues(fact, cycle === 0 ? [0, 2] : [1, 3]);
+    const related = relatedFacts(fact, 4, `inquiry-${fact.id}-${variant}`);
     const options = [
       {
-        text: `${correctClues[0]} 또한 ${correctClues[1]} 두 자료를 함께 검토한다.`,
+        text: `“${correctClues[0]}”와 “${correctClues[1]}”를 함께 검토한다.`,
         correct: true,
+        factId: fact.id,
         explanation: `두 자료는 모두 ${fact.title}의 성격을 밝히는 데 직접 관련됩니다.`
       },
-      ...distractors.map((item, index) => ({
-        text: `${item.clues[index % 4]} 또한 ${item.clues[(index + 1) % 4]} 두 자료를 함께 검토한다.`,
-        correct: false,
-        explanation: `이 탐구 계획은 ${fact.title}보다 ${item.title}을 조사하는 데 적절합니다.`
-      }))
+      ...related.map((item, index) => {
+        const first = distinctiveClue(item, fact, `inquiry-first-${fact.id}-${item.id}-${variant}`);
+        const remaining = usableClues(item).filter(clue => clue !== first);
+        const second = seededShuffle(remaining, `inquiry-second-${fact.id}-${item.id}-${variant}`)[0] || first;
+        return {
+          text: `“${first}”와 “${second}”를 함께 검토한다.`,
+          correct: false,
+          factId: item.id,
+          explanation: `이 탐구 계획은 ${object(fact.title)} 조사하기보다 ${object(item.title)} 조사하는 데 적절합니다.`
+        };
+      })
     ];
     return {
       prompt: `${object(fact.title)} 탐구하기 위한 자료 수집 계획으로 가장 적절한 것은?`,
-      stimulus: `탐구 주제: ${fact.title}\n탐구 목표: ${fact.summary}`,
+      stimulus: `탐구 목표: ${fact.summary}`,
       type: '탐구 설계',
       officialType: '역사 탐구의 설계 및 수행',
+      relatedFactIds: related.map(item => item.id),
       options
     };
   }
 
   function conclusionQuestion(fact, variant, cycle) {
-    const clueIndexes = cycle === 0 ? [0, 2] : [1, 3];
-    const distractors = distractorFacts(fact, 4, `conclusion-${fact.id}-${variant}`);
+    const selectedClues = chooseClues(fact, cycle === 0 ? [0, 3] : [1, 2, 3]);
+    const related = relatedFacts(fact, 4, `conclusion-${fact.id}-${variant}`);
     const options = [
       {
         text: fact.summary,
         correct: true,
-        explanation: `제시된 단서에서 도출할 수 있는 결론은 ${fact.summary}`
+        factId: fact.id,
+        explanation: `제시된 자료에서 도출할 수 있는 결론입니다.`
       },
-      ...distractors.map(item => ({
+      ...related.map(item => ({
         text: item.summary,
         correct: false,
-        explanation: `이 결론은 ${item.title}에 해당하므로 제시된 단서와 맞지 않습니다.`
+        factId: item.id,
+        explanation: `이 결론은 ${item.title}에 해당하므로 제시된 자료와 맞지 않습니다.`
       }))
     ];
     return {
       prompt: '다음 자료를 바탕으로 내릴 수 있는 결론으로 가장 적절한 것은?',
-      stimulus: clueIndexes.map(index => `• ${fact.clues[index]}`).join('\n'),
+      stimulus: selectedClues.map(clue => `• ${clue}`).join('\n'),
       type: '결론 도출',
       officialType: '결론의 도출 및 평가',
+      relatedFactIds: related.map(item => item.id),
       options
     };
   }
 
-  function sourceQuestion(fact, variant, cycle) {
-    const source = DATA.sources[fact.sourceKey];
-    const sourceEntries = Object.entries(DATA.sources)
-      .filter(([key]) => key !== fact.sourceKey)
-      .map(([key, value]) => ({ key, ...value }));
-    const distractors = seededShuffle(sourceEntries, `source-${fact.id}-${variant}`).slice(0, 4);
+  function sequencePermutations(correctLabels, seedText) {
+    const candidates = [correctLabels];
+    const patterns = [
+      [1, 0, 2, 3],
+      [0, 2, 1, 3],
+      [3, 2, 1, 0],
+      [1, 2, 3, 0],
+      [2, 0, 3, 1],
+      [0, 3, 2, 1]
+    ];
+    for (const pattern of seededShuffle(patterns, seedText)) {
+      const candidate = pattern.map(index => correctLabels[index]);
+      if (!candidates.some(existing => existing.join('|') === candidate.join('|'))) candidates.push(candidate);
+      if (candidates.length === 5) break;
+    }
+    return candidates;
+  }
+
+  function chronologyQuestion(fact, variant, cycle) {
+    const sequence = CHRONOLOGY_SETS.find(set => set.some(item => item.id === fact.id));
+    if (!sequence || sequence.length < 4) return sameEraQuestion(fact, variant, cycle);
+    const factIndex = sequence.findIndex(item => item.id === fact.id);
+    const start = Math.max(0, Math.min(sequence.length - 4, factIndex - (cycle ? 2 : 1)));
+    const chronological = sequence.slice(start, start + 4);
+    const displayed = seededShuffle(chronological, `chronology-display-${fact.id}-${variant}`);
+    const labels = ['(가)', '(나)', '(다)', '(라)'];
+    const displayRows = displayed.map((item, index) => ({ label: labels[index], fact: item }));
+    const correctLabels = chronological.map(item => displayRows.find(row => row.fact.id === item.id).label);
+    const permutations = sequencePermutations(correctLabels, `chronology-options-${fact.id}-${variant}`);
+    const correctText = correctLabels.join(' → ');
+    const explanation = chronological.map(item => item.title).join(' → ');
+    const options = permutations.map(order => ({
+      text: order.join(' → '),
+      correct: order.join('|') === correctLabels.join('|'),
+      explanation: order.join('|') === correctLabels.join('|')
+        ? `올바른 순서는 ${explanation}입니다.`
+        : `올바른 순서는 ${explanation}입니다.`
+    }));
+    return {
+      prompt: cycle === 0
+        ? `${subject(fact.title)} 포함된 다음 사건을 일어난 순서대로 바르게 나열한 것은?`
+        : `${subject(fact.title)} 포함된 다음 사건의 선후 관계로 옳은 것은?`,
+      stimulus: displayRows.map(row => `${row.label} ${row.fact.title}`).join('\n'),
+      type: '연대기 배열',
+      officialType: '연대기의 파악',
+      relatedFactIds: chronological.map(item => item.id),
+      chronologyFactIds: chronological.map(item => item.id),
+      correctSequence: correctText,
+      options
+    };
+  }
+
+  function sameEraQuestion(fact, variant, cycle) {
+    const sameEra = relatedFacts(fact, 4, `same-era-${fact.id}-${variant}`);
+    const correct = sameEra[0] || DATA.facts.find(item => item.id !== fact.id && item.era === fact.era);
+    const otherEras = seededShuffle(ERAS.filter(era => era !== fact.era), `same-era-other-${fact.id}-${variant}`).slice(0, 4);
+    const distractors = otherEras.map(era => seededShuffle(DATA.facts.filter(item => item.era === era), `${fact.id}-${variant}-${era}`)[0]);
     const options = [
       {
-        text: source.name,
+        text: correct.title,
         correct: true,
-        explanation: `${topic(source.name)} 이 학습 항목의 우선 검증 출처로 연결되어 있습니다.`
+        factId: correct.id,
+        explanation: `${topic(correct.title)} ${coordinate(fact.title)} 같은 ${fact.era}에 해당합니다.`
       },
       ...distractors.map(item => ({
-        text: item.name,
+        text: item.title,
         correct: false,
-        explanation: `${topic(item.name)} ${item.description}`
+        factId: item.id,
+        explanation: `${topic(item.title)} ${item.era}에 해당합니다.`
       }))
     ];
     return {
-      prompt: cycle === 0
-        ? '다음 주제를 공식 자료로 교차 검증할 때 이 학습 항목이 우선 연결하는 포털은?'
-        : '다음 자료의 원문과 관련 정보를 추가 조사하기 위한 우선 공식 출처는?',
-      stimulus: `${fact.title}\n${fact.summary}`,
-      type: '자료 탐색',
-      officialType: '역사 탐구의 설계 및 수행',
+      prompt: `${coordinate(fact.title)} 같은 시대에 해당하는 역사적 사실은?`,
+      stimulus: cycle === 0 ? fact.clues[0] : fact.clues[3],
+      type: '시대 비교',
+      officialType: '연대기의 파악',
+      relatedFactIds: [correct.id, ...distractors.map(item => item.id)],
       options
     };
   }
@@ -367,10 +545,14 @@
       canonicalId: fact.id,
       era: fact.era,
       category: fact.category,
+      lesson: fact.lesson,
       title: fact.title,
       difficulty,
       points: POINTS[difficulty],
-      sourceKey: fact.sourceKey
+      sourceKey: fact.sourceKey,
+      reviewTier: cycle === 0 ? CORE_LABEL : REPEAT_LABEL,
+      template,
+      cycle
     };
 
     let generated;
@@ -389,20 +571,22 @@
         generated = eraQuestion(fact, variant, cycle);
         break;
       case 5:
+        generated = pairCorrectQuestion(fact, variant, cycle);
+        break;
       case 6:
-        generated = chronologyQuestion(fact, variant, cycle);
+        generated = pairIncorrectQuestion(fact, variant, cycle);
         break;
       case 7:
-        generated = situationQuestion(fact, variant, cycle);
-        break;
-      case 8:
         generated = inquiryQuestion(fact, variant, cycle);
         break;
-      case 9:
+      case 8:
         generated = conclusionQuestion(fact, variant, cycle);
         break;
+      case 9:
+        generated = chronologyQuestion(fact, variant, cycle);
+        break;
       default:
-        generated = sourceQuestion(fact, variant, cycle);
+        throw new Error(`지원하지 않는 문항 형식입니다: ${template}`);
     }
 
     return finalizeQuestion(
@@ -416,23 +600,69 @@
     return DATA.facts.flatMap(fact => Array.from({ length: 20 }, (_, variant) => makeQuestion(fact, variant)));
   }
 
+  function buildMockSets(coreQuestions) {
+    const questionByFactAndTemplate = new Map(
+      coreQuestions.map(question => [`${question.canonicalId}:${question.template}`, question])
+    );
+    const easyTemplates = [0, 2, 4];
+    const hardTemplates = [6, 7, 8];
+    const normalTemplates = [1, 3, 9];
+
+    return Array.from({ length: 5 }, (_, setIndex) => {
+      const questions = [];
+      ERAS.forEach((era, eraIndex) => {
+        const facts = seededShuffle(
+          DATA.facts.filter(fact => fact.era === era),
+          `mock-${era}-facts`
+        );
+        if (facts.length < 5) throw new Error(`${era} 모의고사 구성을 위한 개념이 부족합니다.`);
+        const templates = [
+          easyTemplates[(setIndex + eraIndex) % easyTemplates.length],
+          ...normalTemplates,
+          hardTemplates[(setIndex + eraIndex) % hardTemplates.length]
+        ];
+        templates.forEach((template, slotIndex) => {
+          const fact = facts[(setIndex + slotIndex) % facts.length];
+          const question = questionByFactAndTemplate.get(`${fact.id}:${template}`);
+          if (!question) throw new Error(`${fact.id}의 모의고사 문항 형식 ${template}을 찾지 못했습니다.`);
+          questions.push(question);
+        });
+      });
+      return {
+        id: `mock-${setIndex + 1}`,
+        title: `전 범위 모의고사 ${setIndex + 1}회`,
+        questionIds: seededShuffle(questions, `mock-${setIndex + 1}-order`).map(question => question.id),
+        difficultyCounts: { '쉬움': 10, '보통': 30, '어려움': 10 }
+      };
+    });
+  }
+
+
   const QUESTIONS = buildQuestionBank();
   const QUESTION_MAP = new Map(QUESTIONS.map(question => [question.id, question]));
+  const CORE_QUESTIONS = QUESTIONS.filter(question => question.reviewTier === CORE_LABEL);
+  const REPEAT_QUESTIONS = QUESTIONS.filter(question => question.reviewTier === REPEAT_LABEL);
+  const MOCK_SETS = buildMockSets(CORE_QUESTIONS);
 
   globalThis.HISTORY_APP_API = {
     buildQuestionBank,
     QUESTIONS,
+    CORE_QUESTIONS,
+    REPEAT_QUESTIONS,
+    MOCK_SETS,
     FACT_MAP,
     QUESTION_MAP,
     ERAS,
     CATEGORIES,
-    yearLabel
+    QUESTION_TYPES,
+    yearLabel,
+    relatedFacts
   };
 
   if (typeof document === 'undefined') return;
 
   const DEFAULT_STATE = {
-    version: 2,
+    version: 3,
     answers: {},
     bookmarks: [],
     theme: 'system',
@@ -443,7 +673,7 @@
   function loadState() {
     try {
       const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-      if (!parsed || parsed.version !== 2) return structuredClone(DEFAULT_STATE);
+      if (!parsed || parsed.version !== 3) return structuredClone(DEFAULT_STATE);
       return {
         ...structuredClone(DEFAULT_STATE),
         ...parsed,
@@ -457,7 +687,7 @@
 
   let state = loadState();
   let currentView = 'home';
-  let practiceFilters = { era: '전체', category: '전체', difficulty: '전체', count: 10 };
+  let practiceFilters = { tier: CORE_LABEL, era: '전체', category: '전체', type: '전체', difficulty: '전체', count: 10 };
   let learnFilters = { query: '', era: '전체', category: '전체' };
   let reviewMode = 'wrong';
   let timerId = null;
@@ -609,10 +839,10 @@
       <section class="hero surface">
         <div class="hero-copy">
           <p class="eyebrow">한국사능력검정시험 심화 · 1급 목표</p>
-          <h1>흐름을 이해하고,<br>자료에서 정답을 찾습니다.</h1>
-          <p class="hero-description">120개 핵심 개념을 사료·연대기·상황 판단 형태로 반복합니다. 실제로 답한 문항만 학습 기록에 반영합니다.</p>
+          <h1>정답이 보이는 문제를 버리고,<br>혼동 개념까지 구분합니다.</h1>
+          <p class="hero-description">${formatNumber(DATA.facts.length)}개 핵심 개념을 최태성 선생님의 공개 40강 구성에 맞춰 정리했습니다. 기본 학습은 ${formatNumber(CORE_QUESTIONS.length)}개 핵심 문항을 사용하고, 별도의 ${formatNumber(REPEAT_QUESTIONS.length)}개 심화 반복 문항으로 같은 개념을 다른 단서에서 다시 확인합니다.</p>
           <div class="hero-actions">
-            <button class="primary-button" data-action="quick-practice">예상 문제 10개 풀기</button>
+            <button class="primary-button" data-action="quick-practice">핵심 문항 10개 풀기</button>
             <button class="secondary-button" data-view-target="learn">개념부터 보기</button>
           </div>
         </div>
@@ -628,7 +858,7 @@
         <section class="continue-card surface">
           <div>
             <p class="eyebrow">진행 중인 학습</p>
-            <h2>${session.kind === 'mock' ? '실전 모의고사' : '예상 문제 풀이'}를 이어서 진행합니다.</h2>
+            <h2>${session.kind === 'mock' ? session.mockTitle || '실전 모의고사' : '문제 훈련'}를 이어서 진행합니다.</h2>
             <p>${session.index + 1} / ${session.ids.length}번 문항까지 이동했습니다.</p>
           </div>
           <button class="primary-button" data-action="continue-session">이어서 풀기</button>
@@ -636,15 +866,15 @@
       ` : ''}
 
       <section class="stats-grid" aria-label="학습 통계">
-        <article class="stat-card surface"><span>풀이한 고유 문항</span><strong>${formatNumber(stats.answered)}</strong><small>전체 ${formatNumber(QUESTIONS.length)}개</small></article>
+        <article class="stat-card surface"><span>풀이한 고유 문항</span><strong>${formatNumber(stats.answered)}</strong><small>핵심 ${formatNumber(CORE_QUESTIONS.length)}개 · 반복 포함 ${formatNumber(QUESTIONS.length)}개</small></article>
         <article class="stat-card surface"><span>현재 정답률</span><strong>${stats.accuracy}%</strong><small>${formatNumber(stats.correct)}개 정답</small></article>
         <article class="stat-card surface"><span>오답 복습 대기</span><strong>${formatNumber(stats.wrongIds.length)}</strong><small>최근 답안 기준</small></article>
-        <article class="stat-card surface"><span>저장한 문제</span><strong>${formatNumber(state.bookmarks.length)}</strong><small>북마크</small></article>
+        <article class="stat-card surface"><span>고정 모의고사</span><strong>${MOCK_SETS.length}회</strong><small>회차 간 문항 중복 없음</small></article>
       </section>
 
       <section class="section-block">
         <div class="section-heading">
-          <div><p class="eyebrow">시대별 기록</p><h2>실제 풀이 범위를 확인합니다.</h2></div>
+          <div><p class="eyebrow">시대별 기록</p><h2>실제로 답한 범위만 진도로 계산합니다.</h2></div>
           <button class="text-button" data-view-target="review">오답과 저장 문제 보기</button>
         </div>
         <div class="era-progress surface">
@@ -658,9 +888,9 @@
       </section>
 
       <section class="feature-grid">
-        <article class="feature-card surface"><span class="feature-number">01</span><h3>개념과 단서를 먼저 확인합니다.</h3><p>새로운 용어를 문제에서 갑자기 제시하지 않습니다. 시대·인물·제도와 네 개의 핵심 단서를 먼저 볼 수 있습니다.</p></article>
-        <article class="feature-card surface"><span class="feature-number">02</span><h3>오답 선지까지 분해합니다.</h3><p>정답 이유뿐 아니라 나머지 선택지가 어느 사건과 제도에 해당하는지 설명합니다.</p></article>
-        <article class="feature-card surface"><span class="feature-number">03</span><h3>실전 배점을 그대로 계산합니다.</h3><p>50문항·80분·100점 모의고사에서 80점 이상을 1급으로 판정합니다.</p></article>
+        <article class="feature-card surface"><span class="feature-number">01</span><h3>정답 단서를 문제에 노출하지 않습니다.</h3><p>인물명이나 사건명을 지문에 그대로 넣고 같은 이름을 고르게 하는 문항을 검증 단계에서 차단합니다.</p></article>
+        <article class="feature-card surface"><span class="feature-number">02</span><h3>오답은 인접 개념에서 가져옵니다.</h3><p>같은 강의·시대·주제의 왕, 제도, 사건을 우선 사용하고 의미가 겹치는 선지는 제외합니다.</p></article>
+        <article class="feature-card surface"><span class="feature-number">03</span><h3>모의고사는 고정 세트로 비교합니다.</h3><p>각 회차는 50문항·80분·100점이며, 다섯 회차가 서로 같은 문항을 사용하지 않습니다.</p></article>
       </section>
     `;
   }
@@ -668,7 +898,8 @@
   function renderLearn() {
     const query = learnFilters.query.trim().toLowerCase();
     const filtered = DATA.facts.filter(fact => {
-      const matchesQuery = !query || [fact.title, fact.summary, ...fact.clues].join(' ').toLowerCase().includes(query);
+      const lesson = lessonFor(fact);
+      const matchesQuery = !query || [fact.title, fact.summary, lesson.title, ...fact.clues].join(' ').toLowerCase().includes(query);
       const matchesEra = learnFilters.era === '전체' || fact.era === learnFilters.era;
       const matchesCategory = learnFilters.category === '전체' || fact.category === learnFilters.category;
       return matchesQuery && matchesEra && matchesCategory;
@@ -677,8 +908,8 @@
     elements.main.innerHTML = `
       <section class="page-header">
         <p class="eyebrow">개념 학습</p>
-        <h1>문제에 쓰이는 핵심 단서를 먼저 익힙니다.</h1>
-        <p>개념을 읽은 것만으로는 진도가 올라가지 않습니다. 연결된 문제에 답하면 풀이 기록이 반영됩니다.</p>
+        <h1>40강 흐름에서 핵심 단서를 먼저 익힙니다.</h1>
+        <p>공개된 별별한국사 40강의 큰 단원 구성을 참고하되, 설명과 문제는 공식 자료를 바탕으로 새로 작성했습니다.</p>
       </section>
       <section class="filter-bar surface" aria-label="개념 필터">
         <label class="search-field"><span>검색</span><input id="learnQuery" type="search" value="${escapeHtml(learnFilters.query)}" placeholder="예: 대동법, 청해진, 광무개혁"></label>
@@ -689,9 +920,10 @@
       <section class="concept-grid">
         ${filtered.map(fact => {
           const answered = QUESTIONS.filter(question => question.canonicalId === fact.id && state.answers[question.id]).length;
+          const lesson = lessonFor(fact);
           return `
             <article class="concept-card surface">
-              <div class="concept-meta"><span>${fact.era}</span><span>${fact.category}</span></div>
+              <div class="concept-meta"><span>제${lesson.number}강</span><span>${fact.era}</span><span>${fact.category}</span></div>
               <h2>${fact.title}</h2>
               <p>${fact.summary}</p>
               <details>
@@ -699,8 +931,8 @@
                 <ul>${fact.clues.map(clue => `<li>${clue}</li>`).join('')}</ul>
               </details>
               <div class="concept-footer">
-                <span>연결 문제 ${answered} / 20개 풀이</span>
-                <button class="secondary-button small" data-action="practice-concept" data-fact-id="${fact.id}">이 개념 문제 풀기</button>
+                <span>연결 문제 ${answered} / 20개 · 핵심 10개</span>
+                <button class="secondary-button small" data-action="practice-concept" data-fact-id="${fact.id}">핵심 문제 10개 풀기</button>
               </div>
             </article>
           `;
@@ -717,14 +949,16 @@
     const filteredCount = filterQuestions(practiceFilters).length;
     elements.main.innerHTML = `
       <section class="page-header">
-        <p class="eyebrow">예상 문제</p>
-        <h1>필요한 범위만 골라 반복합니다.</h1>
-        <p>각 문항에 답하는 즉시 핵심 단서와 다섯 선택지의 해설을 확인합니다.</p>
+        <p class="eyebrow">문제 훈련</p>
+        <h1>핵심 문항과 심화 반복을 구분해서 풉니다.</h1>
+        <p>처음에는 핵심 문항을 풀고, 같은 개념을 다른 단서에서 다시 확인할 때 심화 반복을 사용합니다.</p>
       </section>
       <section class="practice-builder surface">
-        <div class="builder-grid">
+        <div class="builder-grid extended">
+          <label><span>문항 구분</span><select id="practiceTier">${['전체', CORE_LABEL, REPEAT_LABEL].map(value => `<option ${value === practiceFilters.tier ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
           <label><span>시대</span><select id="practiceEra">${['전체', ...ERAS].map(value => `<option ${value === practiceFilters.era ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
           <label><span>주제</span><select id="practiceCategory">${['전체', ...CATEGORIES].map(value => `<option ${value === practiceFilters.category ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
+          <label><span>문제 유형</span><select id="practiceType">${['전체', ...QUESTION_TYPES].map(value => `<option ${value === practiceFilters.type ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
           <label><span>난도</span><select id="practiceDifficulty">${['전체', '쉬움', '보통', '어려움'].map(value => `<option ${value === practiceFilters.difficulty ? 'selected' : ''}>${value}</option>`).join('')}</select></label>
           <label><span>문항 수</span><select id="practiceCount">${[5, 10, 20, 50].map(value => `<option value="${value}" ${value === Number(practiceFilters.count) ? 'selected' : ''}>${value}문항</option>`).join('')}</select></label>
         </div>
@@ -733,22 +967,26 @@
           <button class="primary-button" data-action="start-practice" ${filteredCount ? '' : 'disabled'}>문제 시작</button>
         </div>
       </section>
+      <section class="quality-grid">
+        <article class="info-panel surface"><span class="quality-badge core">${CORE_LABEL}</span><h2>${formatNumber(CORE_QUESTIONS.length)}개</h2><p>첫 번째 단서 조합을 사용합니다. 고정 모의고사는 이 문항만 사용합니다.</p></article>
+        <article class="info-panel surface"><span class="quality-badge repeat">${REPEAT_LABEL}</span><h2>${formatNumber(REPEAT_QUESTIONS.length)}개</h2><p>같은 개념을 다른 단서·선지 배열로 반복합니다. 모의고사 점수에는 사용하지 않습니다.</p></article>
+      </section>
       <section class="info-panel surface">
-        <h2>문항 구성</h2>
-        <div class="tag-list">
-          ${DATA.officialTypes.map(type => `<span>${type}</span>`).join('')}
-        </div>
-        <p>120개 핵심 개념마다 20개의 결정적 문항 변형을 제공합니다. 같은 문항 ID는 항상 같은 선택지와 정답을 유지합니다.</p>
+        <h2>출제 유형</h2>
+        <div class="tag-list">${DATA.officialTypes.map(type => `<span>${type}</span>`).join('')}</div>
+        <p>모든 문항은 정답 하나, 고유한 선택지 다섯 개, 선택지별 해설과 공식 근거 포털을 포함합니다.</p>
       </section>
     `;
   }
 
   function filterQuestions(filters) {
     return QUESTIONS.filter(question => {
+      const tierMatch = filters.tier === '전체' || question.reviewTier === filters.tier;
       const eraMatch = filters.era === '전체' || question.era === filters.era;
       const categoryMatch = filters.category === '전체' || question.category === filters.category;
+      const typeMatch = filters.type === '전체' || question.type === filters.type;
       const difficultyMatch = filters.difficulty === '전체' || question.difficulty === filters.difficulty;
-      return eraMatch && categoryMatch && difficultyMatch;
+      return tierMatch && eraMatch && categoryMatch && typeMatch && difficultyMatch;
     });
   }
 
@@ -802,7 +1040,7 @@
     const isBookmarked = state.bookmarks.includes(question.id);
     elements.main.innerHTML = `
       <section class="session-header surface">
-        <div><p class="eyebrow">예상 문제</p><h1>${session.index + 1} / ${session.ids.length}</h1></div>
+        <div><p class="eyebrow">문제 훈련</p><h1>${session.index + 1} / ${session.ids.length}</h1></div>
         <div class="session-actions">
           <button class="icon-text-button ${isBookmarked ? 'active' : ''}" data-action="bookmark" data-question-id="${question.id}" aria-pressed="${isBookmarked}">☆ 저장</button>
           <button class="text-button danger" data-action="end-session">풀이 종료</button>
@@ -823,7 +1061,8 @@
     return `
       <article class="question-card surface">
         <div class="question-meta">
-          <span>${question.era}</span><span>${question.category}</span><span>${question.difficulty} · ${question.points}점</span><span>${question.officialType}</span>
+          <span class="quality-badge ${question.reviewTier === CORE_LABEL ? 'core' : 'repeat'}">${question.reviewTier}</span>
+          <span>제${lessonFor(FACT_MAP.get(question.canonicalId)).number}강</span><span>${question.era}</span><span>${question.category}</span><span>${question.difficulty} · ${question.points}점</span><span>${question.officialType}</span>
         </div>
         <h2>${question.prompt}</h2>
         ${question.stimulus ? `<div class="stimulus">${escapeHtml(question.stimulus).replaceAll('\n', '<br>')}</div>` : ''}
@@ -848,7 +1087,10 @@
               <summary>다섯 선택지 해설 보기</summary>
               <ol>${question.explanations.map((text, index) => `<li class="${index === question.answerIndex ? 'answer' : ''}"><strong>${index + 1}. ${question.options[index]}</strong><p>${text}</p></li>`).join('')}</ol>
             </details>
-            <a class="source-link" href="${DATA.sources[question.sourceKey].url}" target="_blank" rel="noreferrer">공식 근거 포털: ${DATA.sources[question.sourceKey].name}</a>
+            <div class="source-note">
+              <p>${FACT_MAP.get(question.canonicalId).sourceNote}</p>
+              <a class="source-link" href="${DATA.sources[question.sourceKey].url}" target="_blank" rel="noreferrer">공식 근거 포털: ${DATA.sources[question.sourceKey].name}</a>
+            </div>
           </section>
         ` : ''}
       </article>
@@ -864,7 +1106,7 @@
     saveState();
     elements.main.innerHTML = `
       <section class="result-hero surface">
-        <p class="eyebrow">예상 문제 결과</p>
+        <p class="eyebrow">문제 훈련 결과</p>
         <h1>${correct} / ${session.ids.length}개 정답</h1>
         <p>미응답 문항은 풀이 기록에 포함하지 않았습니다.</p>
         <div class="result-actions">
@@ -895,8 +1137,8 @@
     elements.main.innerHTML = `
       <section class="page-header">
         <p class="eyebrow">실전 모의고사</p>
-        <h1>50문항을 80분 안에 풉니다.</h1>
-        <p>쉬움 10문항·보통 30문항·어려움 10문항을 1점·2점·3점으로 계산합니다.</p>
+        <h1>고정된 다섯 회차로 점수 변화를 비교합니다.</h1>
+        <p>각 회차는 핵심 문항 50개로 구성되며, 다른 회차와 문항을 공유하지 않습니다.</p>
       </section>
       <section class="mock-guide surface">
         <div class="mock-score-scale">
@@ -905,25 +1147,33 @@
           <div><strong>60점 이상</strong><span>3급</span></div>
         </div>
         <ul>
-          <li>시험 중에는 정답과 해설을 표시하지 않습니다.</li>
-          <li>문제 번호를 눌러 자유롭게 이동할 수 있습니다.</li>
-          <li>시간이 끝나면 현재 답안으로 자동 제출합니다.</li>
+          <li>쉬움 10문항·보통 30문항·어려움 10문항을 1점·2점·3점으로 계산합니다.</li>
+          <li>각 회차에는 모든 시대가 5문항씩 포함됩니다.</li>
+          <li>시험 중에는 정답과 해설을 표시하지 않으며 80분이 지나면 자동 제출합니다.</li>
           <li>답하지 않은 문제는 0점이며 학습 진도에는 포함하지 않습니다.</li>
         </ul>
-        <button class="primary-button large" data-action="start-mock">모의고사 시작</button>
+      </section>
+      <section class="mock-set-grid">
+        ${MOCK_SETS.map((set, index) => `
+          <article class="mock-set-card surface">
+            <span>고정 세트 ${index + 1}</span>
+            <h2>${set.title}</h2>
+            <p>50문항 · 80분 · 100점</p>
+            <div class="tag-list"><span>쉬움 10</span><span>보통 30</span><span>어려움 10</span></div>
+            <button class="primary-button" data-action="start-mock" data-set-index="${index}">${set.title} 시작</button>
+          </article>
+        `).join('')}
       </section>
     `;
   }
 
-  function startMock() {
-    const seed = `mock-${Date.now()}`;
-    const easy = seededShuffle(QUESTIONS.filter(question => question.difficulty === '쉬움'), `${seed}-easy`).slice(0, 10);
-    const normal = seededShuffle(QUESTIONS.filter(question => question.difficulty === '보통'), `${seed}-normal`).slice(0, 30);
-    const hard = seededShuffle(QUESTIONS.filter(question => question.difficulty === '어려움'), `${seed}-hard`).slice(0, 10);
-    const selected = seededShuffle([...easy, ...normal, ...hard], `${seed}-all`);
+  function startMock(setIndex = 0) {
+    const mockSet = MOCK_SETS[Number(setIndex)] || MOCK_SETS[0];
     state.activeSession = {
       kind: 'mock',
-      ids: selected.map(question => question.id),
+      mockSetId: mockSet.id,
+      mockTitle: mockSet.title,
+      ids: [...mockSet.questionIds],
       index: 0,
       selected: {},
       flagged: [],
@@ -1025,13 +1275,13 @@
     });
     elements.main.innerHTML = `
       <section class="result-hero surface ${result.grade === '1급' ? 'passed' : ''}">
-        <p class="eyebrow">실전 모의고사 결과</p>
+        <p class="eyebrow">${session.mockTitle || '실전 모의고사'} 결과</p>
         <h1>${result.score}점 · ${result.grade}</h1>
         <p>${result.answeredCount}문항 응답 · ${result.correctCount}문항 정답</p>
         <div class="score-bar"><span style="width:${result.score}%"></span><i style="left:80%">1급 80점</i></div>
         <div class="result-actions">
           <button class="primary-button" data-action="mock-wrong-review">오답만 다시 풀기</button>
-          <button class="secondary-button" data-action="new-mock">새 모의고사</button>
+          <button class="secondary-button" data-action="new-mock">다른 회차 선택</button>
         </div>
       </section>
       <section class="difficulty-result-grid">
@@ -1074,7 +1324,7 @@
             return `<article><div><span>${question.era} · ${question.difficulty}</span><strong>${question.title}</strong><p>${question.prompt}</p></div><div><button class="text-button" data-action="single-review" data-question-id="${id}">다시 풀기</button>${reviewMode === 'bookmark' ? `<button class="icon-button" data-action="bookmark" data-question-id="${id}" aria-label="저장 해제">×</button>` : ''}</div></article>`;
           }).join('')}
         </section>
-      ` : `<section class="empty-state surface"><strong>${reviewMode === 'wrong' ? '현재 오답이 없습니다.' : '저장한 문제가 없습니다.'}</strong><p>문제를 실제로 푼 뒤 이 화면에서 다시 확인할 수 있습니다.</p><button class="primary-button" data-view-target="practice">예상 문제로 이동</button></section>`}
+      ` : `<section class="empty-state surface"><strong>${reviewMode === 'wrong' ? '현재 오답이 없습니다.' : '저장한 문제가 없습니다.'}</strong><p>문제를 실제로 푼 뒤 이 화면에서 다시 확인할 수 있습니다.</p><button class="primary-button" data-view-target="practice">문제 훈련으로 이동</button></section>`}
     `;
   }
 
@@ -1083,27 +1333,29 @@
     elements.main.innerHTML = `
       <section class="page-header">
         <p class="eyebrow">시험 기준과 출처</p>
-        <h1>공식 시험 정보와 공공기관 자료를 우선합니다.</h1>
-        <p>시험 일정과 요강은 한국사능력검정시험 공식 홈페이지를 최종 기준으로 확인해야 합니다.</p>
+        <h1>문항 수보다 검증 범위를 먼저 공개합니다.</h1>
+        <p>공식 출제 유형, 40강 학습 구조, 핵심 문항과 반복 문항의 역할을 분리합니다.</p>
       </section>
-      <section class="exam-schedule surface">
+      <section class="schedule-card surface">
         <div class="section-heading"><div><p class="eyebrow">2026년 일정</p><h2>가장 가까운 시험은 제${exam.round}회입니다.</h2></div><a class="primary-link" href="${DATA.sources.exam.url}" target="_blank" rel="noreferrer">공식 일정 확인</a></div>
-        <div class="schedule-table" role="table">
-          ${DATA.exams.map(item => `<div role="row"><strong role="cell">제${item.round}회</strong><span role="cell">${formatDate(item.date)}</span><span role="cell">${item.note}</span><span role="cell">발표 ${item.result}</span></div>`).join('')}
+        <div class="schedule-grid">
+          ${DATA.exams.map(item => `<article><span>제${item.round}회</span><strong>${formatDate(item.date)}</strong><p>${item.note}</p><small>정기 접수 ${item.registration}</small></article>`).join('')}
         </div>
       </section>
-      <section class="section-block">
-        <div class="section-heading"><div><p class="eyebrow">공식 평가 방향</p><h2>여섯 가지 능력을 교차해 묻습니다.</h2></div></div>
-        <div class="type-grid">${DATA.officialTypes.map((type, index) => `<article class="surface"><span>${String(index + 1).padStart(2, '0')}</span><strong>${type}</strong></article>`).join('')}</div>
+      <section class="quality-grid">
+        <article class="info-panel surface"><span class="quality-badge core">핵심 개념</span><h2>${formatNumber(DATA.facts.length)}개</h2><p>복합 주제를 분리하고 조선 후기·일제 강점기·현대사의 넓은 항목을 더 작은 개념으로 다시 나눴습니다.</p></article>
+        <article class="info-panel surface"><span class="quality-badge core">핵심 문항</span><h2>${formatNumber(CORE_QUESTIONS.length)}개</h2><p>정답 노출, 무관한 시대의 무작위 오답, 대표 연도만 비교하는 문제를 배제했습니다.</p></article>
+        <article class="info-panel surface"><span class="quality-badge repeat">심화 반복</span><h2>${formatNumber(REPEAT_QUESTIONS.length)}개</h2><p>같은 개념을 다른 단서로 복습하는 문항이며, 모의고사 점수 산정에는 사용하지 않습니다.</p></article>
       </section>
       <section class="source-grid">
         ${Object.values(DATA.sources).map(source => `<a class="source-card surface" href="${source.url}" target="_blank" rel="noreferrer"><span>공식 자료</span><h2>${source.name}</h2><p>${source.description}</p><strong>새 창에서 확인 ↗</strong></a>`).join('')}
       </section>
       <section class="policy-card surface">
-        <h2>자료 사용 원칙</h2>
-        <p>최태성 선생님의 공개 강의와 공개된 교재 소개에서 큰 흐름 정리, 핵심 단서 반복, 능동 회상 구조를 참고했습니다. 강의·교재의 문장, 판서, 문제와 이미지는 복제하지 않았습니다.</p>
-        <p>이 사이트는 국사편찬위원회, 최태성 선생님 또는 이투스와 제휴한 서비스가 아닙니다. 예상 문제는 공식 기출문제 그 자체가 아니며, 시험 일정과 규정은 공식 홈페이지에서 다시 확인해야 합니다.</p>
-        <p>학습 기록은 이 브라우저에만 저장됩니다. 서버로 답안이나 개인정보를 전송하지 않습니다.</p>
+        <h2>문항 작성 원칙</h2>
+        <p>국사편찬위원회의 여섯 가지 출제 유형을 기준으로 자료 추론, 연대기, 상황 판단, 탐구 설계와 결론 도출 문항을 구분합니다. 심화 시험은 50문항·5지 택1형이며 80점 이상이 1급입니다.</p>
+        <p>최태성 선생님의 공개 강의와 공개된 2026 별별한국사 40강 목차에서 전체 흐름과 학습 순서를 참고했습니다. 강의·교재의 문장, 판서, 문제와 이미지는 복제하지 않았습니다.</p>
+        <p>${DATA.qualityPolicy.description} ${DATA.qualityPolicy.mockDescription} ${DATA.qualityPolicy.difficultyDescription}</p>
+        <p>이 사이트는 국사편찬위원회, 최태성 선생님 또는 이투스와 제휴한 서비스가 아닙니다. 실제 기출문제를 복제하지 않으며, 시험 일정과 규정은 공식 홈페이지를 최종 기준으로 확인해야 합니다.</p>
       </section>
     `;
   }
@@ -1111,7 +1363,7 @@
   function exportProgress() {
     const payload = {
       schema: 'korean-history-grade1-progress',
-      version: 2,
+      version: 3,
       exportedAt: new Date().toISOString(),
       dataVersion: DATA.version,
       state
@@ -1128,7 +1380,7 @@
   async function importProgress(file) {
     try {
       const parsed = JSON.parse(await file.text());
-      if (parsed.schema !== 'korean-history-grade1-progress' || parsed.version !== 2 || !parsed.state) {
+      if (parsed.schema !== 'korean-history-grade1-progress' || parsed.version !== 3 || !parsed.state) {
         throw new Error('지원하지 않는 학습 기록 형식입니다.');
       }
       state = {
@@ -1177,13 +1429,13 @@
     if (!action) return;
 
     if (action === 'quick-practice') {
-      practiceFilters = { era: '전체', category: '전체', difficulty: '전체', count: 10 };
+      practiceFilters = { tier: CORE_LABEL, era: '전체', category: '전체', type: '전체', difficulty: '전체', count: 10 };
       startPractice();
     } else if (action === 'continue-session') {
       currentView = state.activeSession.kind === 'mock' ? 'mock' : 'practice';
       render();
     } else if (action === 'practice-concept') {
-      const ids = QUESTIONS.filter(question => question.canonicalId === target.dataset.factId).map(question => question.id);
+      const ids = CORE_QUESTIONS.filter(question => question.canonicalId === target.dataset.factId).map(question => question.id);
       startPractice(ids);
     } else if (action === 'start-practice') {
       startPractice();
@@ -1229,7 +1481,7 @@
       saveState();
       renderPractice();
     } else if (action === 'start-mock') {
-      startMock();
+      startMock(target.dataset.setIndex);
     } else if (action === 'mock-previous') {
       state.activeSession.index = Math.max(0, state.activeSession.index - 1);
       saveState();
@@ -1287,11 +1539,17 @@
     } else if (target.id === 'learnCategory') {
       learnFilters.category = target.value;
       renderLearn();
+    } else if (target.id === 'practiceTier') {
+      practiceFilters.tier = target.value;
+      renderPractice();
     } else if (target.id === 'practiceEra') {
       practiceFilters.era = target.value;
       renderPractice();
     } else if (target.id === 'practiceCategory') {
       practiceFilters.category = target.value;
+      renderPractice();
+    } else if (target.id === 'practiceType') {
+      practiceFilters.type = target.value;
       renderPractice();
     } else if (target.id === 'practiceDifficulty') {
       practiceFilters.difficulty = target.value;
