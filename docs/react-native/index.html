@@ -1,1 +1,207 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b1020"><title>Compose 개발자의 React Native 학습 지도</title><style>:root{--bg:#f5f7fb;--card:#fff;--text:#101827;--muted:#667085;--line:#dbe2ef;--brand:#6457f5;--soft:#eef0ff;--ok:#087f5b}html[data-theme=dark]{--bg:#090d18;--card:#111827;--text:#f7f8fc;--muted:#aab4c7;--line:#29344b;--brand:#988cff;--soft:#1b2440;--ok:#55d6a3;color-scheme:dark}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;line-height:1.65}button,input{font:inherit}.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:10px;padding:10px max(14px,env(safe-area-inset-left));border-bottom:1px solid var(--line);background:var(--bg)}.logo{font-weight:900}.grow{flex:1}.top button{min-width:44px;height:44px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--text)}main{max-width:980px;margin:auto;padding:18px 14px 90px}.hero{padding:27px 22px;border:1px solid var(--line);border-radius:24px;background:var(--card)}h1{margin:5px 0 12px;font-size:clamp(2rem,9vw,4rem);line-height:1.08;letter-spacing:-.04em}.hero p{margin:0;color:var(--muted)}.badges{display:flex;flex-wrap:wrap;gap:7px;margin-top:17px}.badges span,.filter button{padding:7px 10px;border:1px solid var(--line);border-radius:999px;background:var(--card);color:var(--text)}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:12px 0}.stat{padding:15px;border:1px solid var(--line);border-radius:16px;background:var(--card)}.stat b{display:block;font-size:1.45rem}.stat small{color:var(--muted)}.tools{position:sticky;top:65px;z-index:15;padding:10px 0;background:var(--bg)}input{width:100%;height:48px;padding:0 14px;border:1px solid var(--line);border-radius:13px;background:var(--card);color:var(--text)}.filter{display:flex;gap:6px;overflow:auto;padding-top:8px}.filter button{white-space:nowrap}.filter .on{border-color:var(--brand);background:var(--brand);color:white}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.card{padding:18px;border:1px solid var(--line);border-radius:19px;background:var(--card)}.card.done{outline:2px solid var(--ok)}.head{display:flex;gap:10px}.check{flex:0 0 38px;height:38px;border:1px solid var(--line);border-radius:11px;background:var(--soft);color:var(--text);font-weight:900}.done .check{background:var(--ok);color:white}.card h2{margin:0;font-size:1.08rem;line-height:1.35}.phase{color:var(--muted);font-size:.8rem}.compose{padding:11px 12px;border-left:4px solid var(--brand);background:var(--soft);border-radius:0 10px 10px 0}.card summary{font-weight:800;cursor:pointer}.card ul{padding-left:21px}.warn{padding:11px;border:1px solid var(--line);border-radius:11px;background:var(--soft)}.links{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}.links a{padding:7px 9px;border:1px solid var(--line);border-radius:9px;color:var(--text);text-decoration:none;font-size:.82rem;font-weight:800}.plan{margin-top:28px;padding:20px;border:1px solid var(--line);border-radius:20px;background:var(--card)}.weeks{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.week{padding:12px;border-radius:13px;background:var(--soft)}.week b{color:var(--brand)}.empty{text-align:center;color:var(--muted);padding:30px}@media(max-width:720px){.grid{grid-template-columns:1fr}.weeks{grid-template-columns:1fr 1fr}}@media(max-width:420px){.stats{grid-template-columns:1fr}.weeks{grid-template-columns:1fr}}</style></head><body><header class="top"><span class="logo">RN × Compose</span><span class="grow"></span><button id="theme" aria-label="화면 테마 변경">◐</button></header><main><section class="hero"><small>공식 문서 중심 · 모바일 학습용</small><h1>Compose 개발자의 React Native 학습 지도</h1><p>Kotlin과 Jetpack Compose로 앱을 만들어 본 개발자가 React, TypeScript, React Native 런타임, Kotlin 네이티브 연동과 Android 배포까지 순서대로 학습합니다.</p><div class="badges"><span>16개 모듈</span><span>진도 자동 저장</span><span>검색과 필터</span><span>iPhone Safari 지원</span></div></section><section class="stats"><div class="stat"><b id="done">0</b><small>완료 모듈</small></div><div class="stat"><b id="total">16</b><small>전체 모듈</small></div><div class="stat"><b id="rate">0%</b><small>전체 진도</small></div></section><section class="tools"><input id="q" type="search" placeholder="예: useEffect, FlatList, Kotlin"><div class="filter" id="filters"></div></section><section class="grid" id="list"></section><p class="empty" id="empty" hidden>검색 결과가 없습니다.</p><section class="plan"><h2>8주 팀 학습안</h2><div class="weeks" id="weeks"></div><p>매주 공식 문서 읽기, 개인 구현, 작은 PR 리뷰, 회고를 반복합니다. 마지막에는 기존 Compose 앱의 검색 목록과 상세 화면을 React Native로 포팅하고 Kotlin 기능 하나를 네이티브 모듈로 연결합니다.</p></section></main><script>const L=[{"p":"기초","t":"1. JavaScript 핵심","c":"Kotlin의 val·함수·컬렉션 지식을 JavaScript의 const·함수·배열 메서드로 옮깁니다.","k":["const와 let, 객체·배열 구조 분해, 전개 구문을 익힙니다.","map·filter·find·reduce가 새 배열과 값을 만드는 방식을 확인합니다.","===와 참조 동일성, null과 undefined의 차이를 구분합니다."],"x":"Kotlin의 data class처럼 객체를 직접 변경하지 말고 새 객체를 만들어 상태를 갱신합니다.","u":[["MDN JavaScript","https://developer.mozilla.org/ko/docs/Web/JavaScript/Guide"]]},{"p":"기초","t":"2. TypeScript를 Kotlin 관점에서 이해하기","c":"interface와 type은 데이터 계약을 표현하지만 Kotlin 클래스처럼 런타임에 남지 않습니다.","k":["union type과 narrowing을 sealed class의 분기 처리와 비교합니다.","generic, optional property, utility type을 익힙니다.","strict 설정을 켜고 외부 데이터는 런타임 검증을 추가합니다."],"x":"TypeScript 타입 검사는 빌드 전에만 작동합니다. 서버 응답이 실제로 안전해지는 것은 아닙니다.","u":[["TypeScript Handbook","https://www.typescriptlang.org/docs/handbook/intro.html"]]},{"p":"React","t":"3. JSX와 함수 컴포넌트","c":"Composable 함수처럼 함수가 UI를 반환하지만 JSX는 JavaScript 표현식입니다.","k":["props를 읽기 전용 입력으로 취급합니다.","조건부 UI는 if, 삼항 연산자, &&를 사용합니다.","목록 렌더링에서는 안정적인 key를 제공합니다."],"x":"컴포넌트 함수 안에서 네트워크 요청이나 상태 변경을 직접 실행하지 않습니다.","u":[["React UI 표현","https://react.dev/learn/describing-the-ui"]]},{"p":"React","t":"4. 상태와 렌더링","c":"remember와 mutableStateOf에 해당하는 출발점은 useState입니다.","k":["상태 갱신은 다음 렌더링을 예약합니다.","이전 상태에 의존하면 함수형 업데이트를 사용합니다.","상태는 필요한 가장 가까운 공통 부모로 끌어올립니다."],"x":"setState 직후의 변수는 즉시 새 값으로 바뀌지 않습니다.","u":[["React 상태","https://react.dev/learn/state-a-components-memory"],["상태 공유","https://react.dev/learn/sharing-state-between-components"]]},{"p":"React","t":"5. Effect와 수명주기","c":"LaunchedEffect와 비슷해 보이지만 useEffect는 외부 시스템과 동기화할 때만 사용합니다.","k":["렌더링으로 계산할 수 있는 값은 Effect에 저장하지 않습니다.","구독과 타이머는 cleanup 함수에서 해제합니다.","의존성 배열을 임의로 숨기지 않습니다."],"x":"사용자 클릭으로 발생하는 작업은 Effect보다 이벤트 핸들러에 둡니다.","u":[["Effect로 동기화","https://react.dev/learn/synchronizing-with-effects"],["Effect가 필요하지 않은 경우","https://react.dev/learn/you-might-not-need-an-effect"]]},{"p":"환경","t":"6. Expo와 React Native CLI 선택","c":"첫 학습과 일반 앱 개발은 Expo 개발 빌드가 편리하며, 기존 Android 앱 통합이나 특수 빌드 제어가 필요하면 네이티브 프로젝트를 직접 다룹니다.","k":["Expo Go와 Development Build의 차이를 이해합니다.","Prebuild가 android·ios 프로젝트를 생성하는 방식을 확인합니다.","네이티브 라이브러리 호환성을 도입 전에 점검합니다."],"x":"Expo를 사용한다고 네이티브 코드를 사용할 수 없는 것은 아닙니다.","u":[["React Native 시작","https://reactnative.dev/docs/environment-setup"],["Expo 개발 빌드","https://docs.expo.dev/develop/development-builds/introduction/"]]},{"p":"UI","t":"7. View, Text, StyleSheet와 Flexbox","c":"Column과 Row는 별도 컴포넌트가 아니라 View의 flexDirection으로 표현합니다.","k":["기본 flexDirection이 column이라는 점을 기억합니다.","dp처럼 숫자 단위를 사용하지만 웹 CSS와 속성 차이가 있습니다.","Safe Area와 키보드가 실제 콘텐츠를 가리지 않도록 처리합니다."],"x":"웹 CSS를 그대로 복사하면 지원되지 않는 속성과 레이아웃 차이 때문에 문제가 생깁니다.","u":[["스타일","https://reactnative.dev/docs/style"],["Flexbox","https://reactnative.dev/docs/flexbox"],["Safe Area","https://docs.expo.dev/versions/latest/sdk/safe-area-context/"]]},{"p":"UI","t":"8. 입력, 터치, 접근성","c":"Modifier.clickable과 TextField에 해당하는 기능을 Pressable과 TextInput으로 구성합니다.","k":["Pressable의 pressed 상태로 터치 피드백을 만듭니다.","TextInput은 값과 onChangeText를 연결해 제어합니다.","accessibilityRole, Label, State를 지정합니다."],"x":"아이콘만 있는 버튼에는 접근성 이름을 반드시 제공합니다.","u":[["Pressable","https://reactnative.dev/docs/pressable"],["TextInput","https://reactnative.dev/docs/textinput"],["접근성","https://reactnative.dev/docs/accessibility"]]},{"p":"UI","t":"9. ScrollView와 FlatList","c":"LazyColumn에 해당하는 기본 선택은 FlatList입니다.","k":["긴 목록은 ScrollView에 모두 렌더링하지 않습니다.","keyExtractor와 renderItem의 참조 안정성을 점검합니다.","빈 상태, 헤더, 구분선, 새로고침, 페이지네이션을 목록 API로 구성합니다."],"x":"잘못된 estimated size와 과도한 memo는 측정 없이 적용하지 않습니다.","u":[["FlatList","https://reactnative.dev/docs/flatlist"],["목록 최적화","https://reactnative.dev/docs/optimizing-flatlist-configuration"]]},{"p":"앱 구조","t":"10. 내비게이션과 딥 링크","c":"NavHost와 유사하게 화면 그래프와 파라미터를 정의하지만 React Navigation 또는 Expo Router를 사용합니다.","k":["Stack과 Tab의 역할을 구분합니다.","화면 파라미터를 TypeScript로 정의합니다.","Android App Link와 딥 링크 입력을 검증합니다."],"x":"민감한 객체 전체를 파라미터로 넘기기보다 식별자를 전달하고 목적지에서 데이터를 읽습니다.","u":[["React Navigation","https://reactnavigation.org/docs/getting-started"],["Expo Router","https://docs.expo.dev/router/introduction/"]]},{"p":"데이터","t":"11. 서버 상태와 로컬 상태","c":"ViewModel 하나에 모든 상태를 넣기보다 서버 캐시, 화면 상태, 폼 상태를 구분합니다.","k":["fetch의 성공·빈 결과·오류·취소 상태를 명시합니다.","서버 상태는 캐시 라이브러리 도입을 검토합니다.","화면 전역 상태는 Context 또는 전용 저장소를 최소 범위로 사용합니다."],"x":"서버 응답을 전역 저장소에 무조건 복사하면 캐시 무효화가 복잡해집니다.","u":[["React 상태 관리","https://react.dev/learn/managing-state"],["Fetch API","https://developer.mozilla.org/ko/docs/Web/API/Fetch_API"]]},{"p":"데이터","t":"12. 저장소, 권한, 오프라인","c":"DataStore·Room·Keystore에 해당하는 저장 수단을 데이터 성격에 따라 선택합니다.","k":["일반 설정, 구조화 데이터, 민감 토큰을 서로 다른 저장소에 둡니다.","권한 거부와 영구 거부 상태를 UX에 반영합니다.","오프라인 캐시와 재동기화 정책을 먼저 설계합니다."],"x":"AsyncStorage에 인증 토큰이나 비밀값을 평문으로 저장하지 않습니다.","u":[["React Native 보안","https://reactnative.dev/docs/security"],["Expo SecureStore","https://docs.expo.dev/versions/latest/sdk/securestore/"],["Expo SQLite","https://docs.expo.dev/versions/latest/sdk/sqlite/"]]},{"p":"네이티브","t":"13. New Architecture 이해","c":"현재 React Native는 Fabric 렌더러, TurboModules, JSI, Codegen을 중심으로 네이티브와 연결됩니다.","k":["JavaScript 런타임과 네이티브 UI 렌더링 경계를 구분합니다.","Codegen이 TypeScript 명세로부터 네이티브 인터페이스를 생성하는 흐름을 봅니다.","Hermes와 Metro의 역할을 구분합니다."],"x":"과거 Bridge 설명만으로 현재 성능 특성과 네이티브 연동 구조를 판단하지 않습니다.","u":[["New Architecture","https://reactnative.dev/architecture/landing-page"],["Hermes","https://reactnative.dev/docs/hermes"]]},{"p":"네이티브","t":"14. Kotlin 네이티브 모듈","c":"기존 Android SDK와 성능 민감 기능을 Kotlin으로 구현하고 TypeScript에 노출할 수 있습니다.","k":["Turbo Native Module 명세와 Codegen을 익힙니다.","Promise, 이벤트, 오류를 TypeScript 계약에 맞게 전달합니다.","Activity와 Application Context, 메인 스레드 요구를 구분합니다."],"x":"React Context와 Android Context는 전혀 다른 개념입니다.","u":[["Android Turbo Module","https://reactnative.dev/docs/turbo-native-modules-android"],["기존 Android 앱 통합","https://reactnative.dev/docs/integration-with-existing-apps"]]},{"p":"품질","t":"15. 테스트와 성능","c":"Compose UI Test처럼 사용자가 관찰하는 결과를 검증하고, 최적화는 프로파일링 뒤에 수행합니다.","k":["Jest로 순수 로직을 검사합니다.","React Native Testing Library로 역할과 텍스트 기반 상호작용을 검증합니다.","핵심 흐름은 실제 기기 E2E 테스트로 보호합니다."],"x":"큰 Snapshot을 무비판적으로 갱신하거나 모든 컴포넌트에 memo를 붙이지 않습니다.","u":[["테스트 개요","https://reactnative.dev/docs/testing-overview"],["React Native DevTools","https://reactnative.dev/docs/react-native-devtools"]]},{"p":"출시","t":"16. Android 빌드와 배포","c":"Gradle 서명과 AAB 지식은 그대로 활용하며 JavaScript 번들, 소스맵, OTA 업데이트 경계를 추가로 관리합니다.","k":["개발·검증·운영 빌드를 분리합니다.","서명 키, versionCode, versionName, AAB를 관리합니다.","네이티브 변경이 포함되면 스토어 바이너리를 새로 배포합니다."],"x":"네이티브 모듈이나 권한 변경을 JavaScript OTA 업데이트만으로 배포할 수 없습니다.","u":[["Android 배포","https://reactnative.dev/docs/signed-apk-android"],["EAS Build","https://docs.expo.dev/build/"],["EAS Update","https://docs.expo.dev/eas-update/introduction/"]]}];const S='rn-study-v2';let phase='전체';let done=new Set(JSON.parse(localStorage.getItem(S)||'[]'));const $=s=>document.querySelector(s);const phases=['전체',...new Set(L.map(x=>x.p))];function stats(){$('#done').textContent=done.size;$('#total').textContent=L.length;$('#rate').textContent=Math.round(done.size/L.length*100)+'%'}function card(x,i){let d=done.has(i);return `<article class="card ${d?'done':''}" data-id="${i}"><div class="head"><button class="check" aria-label="${x.t} 완료 상태 변경">${d?'✓':'○'}</button><div><h2>${x.t}</h2><div class="phase">${x.p}</div></div></div><p class="compose"><b>Compose 연결:</b> ${x.c}</p><details><summary>핵심 내용 열기</summary><ul>${x.k.map(v=>`<li>${v}</li>`).join('')}</ul><p class="warn"><b>주의:</b> ${x.x}</p><div class="links">${x.u.map(v=>`<a href="${v[1]}" target="_blank" rel="noreferrer">${v[0]} ↗</a>`).join('')}</div></details></article>`}function render(){let q=$('#q').value.toLowerCase().trim();let items=L.map((x,i)=>[x,i]).filter(([x])=>(phase==='전체'||x.p===phase)&&JSON.stringify(x).toLowerCase().includes(q));$('#list').innerHTML=items.map(([x,i])=>card(x,i)).join('');$('#empty').hidden=items.length>0;document.querySelectorAll('.check').forEach(b=>b.onclick=()=>{let id=+b.closest('.card').dataset.id;done.has(id)?done.delete(id):done.add(id);localStorage.setItem(S,JSON.stringify([...done]));stats();render()})}function init(){$('#filters').innerHTML=phases.map(p=>`<button class="${p==='전체'?'on':''}" data-p="${p}">${p}</button>`).join('');document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{phase=b.dataset.p;document.querySelectorAll('[data-p]').forEach(v=>v.classList.toggle('on',v===b));render()});$('#q').oninput=render;let w=['JavaScript·TypeScript','React 상태·Effect','UI·목록','내비게이션·데이터','저장소·접근성','테스트·성능','Kotlin 네이티브 연동','빌드·배포'];$('#weeks').innerHTML=w.map((v,i)=>`<div class="week"><b>${i+1}주차</b><div>${v}</div></div>`).join('');let t=localStorage.getItem('rn-theme');document.documentElement.dataset.theme=t||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');stats();render()}$('#theme').onclick=()=>{let t=document.documentElement.dataset.theme==='dark'?'light':'dark';document.documentElement.dataset.theme=t;localStorage.setItem('rn-theme',t)};init();</script></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#090d18" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="Kotlin과 Jetpack Compose Android 개발자를 위한 React Native 실전 교과서입니다. 공식 문서를 바탕으로 개념 설명, Compose 비교, 코드, 문제, 실습을 제공합니다.">
+  <title>Compose 개발자의 React Native 실전 교과서</title>
+  <link rel="stylesheet" href="./styles.css?v=20260726-2">
+</head>
+<body>
+  <a class="skip-link" href="#mainContent">본문으로 바로 이동</a>
+
+  <header class="appbar">
+    <div class="appbar-inner">
+      <button
+        class="icon-button mobile-only"
+        id="navToggle"
+        type="button"
+        aria-label="학습 목차 열기"
+        aria-controls="sidebar"
+        aria-expanded="false"
+      >☰</button>
+
+      <a class="brand" id="brandHome" href="#home" aria-label="React Native 교과서 홈">
+        <span class="brand-mark" aria-hidden="true">RN</span>
+        <span class="brand-label">Compose 개발자의 React Native 교과서</span>
+      </a>
+
+      <span class="appbar-spacer"></span>
+
+      <button class="text-button header-home" id="homeButton" type="button" aria-label="교과서 홈으로 이동">
+        <span aria-hidden="true">⌂</span>
+        <span class="header-home-label"> 홈</span>
+      </button>
+      <button class="icon-button" id="themeButton" type="button" aria-label="다크 모드로 변경">
+        <span aria-hidden="true">◐</span>
+        <span class="theme-label" hidden>테마</span>
+      </button>
+    </div>
+    <div class="read-progress" aria-hidden="true"><span id="readProgress"></span></div>
+  </header>
+
+  <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true"></div>
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar" aria-label="React Native 학습 목차">
+      <div class="sidebar-head">
+        <h2>20개 단원 목차</h2>
+        <input
+          class="sidebar-search"
+          id="sidebarSearch"
+          type="search"
+          inputmode="search"
+          placeholder="예: useEffect, FlatList, Kotlin"
+          aria-label="학습 단원 검색"
+        >
+        <div class="sidebar-progress" aria-label="전체 학습 진도">
+          <span id="sidebarProgressText">0 / 20개 완료</span>
+          <strong id="sidebarProgressPercent">0%</strong>
+          <div class="sidebar-progress-bar" aria-hidden="true"><span id="sidebarProgressBar"></span></div>
+        </div>
+      </div>
+
+      <nav class="curriculum-nav" id="curriculumNav" aria-label="단원 목록"></nav>
+
+      <div class="sidebar-actions">
+        <button id="exportProgress" type="button">진도 내보내기</button>
+        <button id="importProgressButton" type="button">진도 불러오기</button>
+        <input id="importProgressInput" type="file" accept="application/json,.json" hidden>
+        <button class="danger-button" id="resetProgress" type="button">진도 초기화</button>
+      </div>
+    </aside>
+
+    <main class="content" id="mainContent" tabindex="-1">
+      <section class="screen" id="homeScreen">
+        <section class="hero">
+          <span class="hero-eyebrow">공식 문서 기반 · 설명부터 실습까지 한 페이지에서</span>
+          <h1>링크 목록이 아니라<br>실제로 공부하는 교과서</h1>
+          <p>
+            Kotlin과 Jetpack Compose로 앱을 만들어 본 개발자가 JavaScript와 TypeScript부터 React의 렌더링 모델,
+            React Native UI, New Architecture, Kotlin 네이티브 연동, 테스트와 Android 출시까지 순서대로 학습합니다.
+            각 단원에는 한국어 개념 설명, Compose 비교, 실행 가능한 코드, 확인 문제, 개인 실습과 팀 토론이 들어 있습니다.
+          </p>
+          <div class="hero-actions">
+            <button class="primary-button" id="homeStart" type="button">첫 미완료 단원 시작</button>
+            <button class="secondary-button" id="homeResume" type="button" hidden>
+              <span id="homeResumeLabel">이어서 학습</span>
+            </button>
+          </div>
+          <div class="version-chips" aria-label="교과서 기술 기준">
+            <span class="chip">React Native 0.86</span>
+            <span class="chip">React 19.2.3</span>
+            <span class="chip">Expo SDK 57</span>
+            <span class="chip">New Architecture</span>
+            <span class="chip">2026-07-26 검증</span>
+          </div>
+        </section>
+
+        <section class="home-section" aria-labelledby="progressHeading">
+          <h2 id="progressHeading">현재 학습 현황</h2>
+          <p class="section-lead">완료 표시와 문제 풀이 기록은 이 브라우저에 자동으로 저장됩니다. JSON 파일로 옮길 수도 있습니다.</p>
+          <div class="overview-grid">
+            <article class="info-card"><strong id="homeCompleted">0</strong><span>완료한 단원</span></article>
+            <article class="info-card"><strong id="homeTotal">20</strong><span>전체 단원</span></article>
+            <article class="info-card"><strong id="homeHours">42시간</strong><span>이론 예상 시간</span></article>
+          </div>
+        </section>
+
+        <section class="home-section" aria-labelledby="methodHeading">
+          <h2 id="methodHeading">이 사이트에서 공부하는 방식</h2>
+          <p class="section-lead">공식 문서를 외부에서 먼저 읽어 오도록 떠넘기지 않습니다. 교과서 본문에서 필요한 내용을 가르친 뒤 원문을 검증 자료로 제공합니다.</p>
+          <div class="decision-grid">
+            <article class="decision-card recommended">
+              <h3>1. 개념을 한국어로 학습합니다</h3>
+              <p>새 용어를 정의하고 왜 필요한지 설명합니다. Compose에서 이미 알고 있는 개념과 같아 보이지만 실제로 다른 지점을 명확히 구분합니다.</p>
+            </article>
+            <article class="decision-card">
+              <h3>2. 코드와 상태 흐름을 확인합니다</h3>
+              <p>TypeScript, TSX, Kotlin 예제를 함께 읽고 렌더링, 수명주기, 스레드, 네이티브 경계를 실제 코드로 연결합니다.</p>
+            </article>
+            <article class="decision-card">
+              <h3>3. 문제와 실습으로 검증합니다</h3>
+              <p>각 단원에서 바로 확인 문제를 풀고 개인 구현과 팀 토론을 진행합니다. 마지막에는 기존 Compose 앱의 기능을 React Native로 포팅합니다.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="home-section" aria-labelledby="baselineHeading">
+          <h2 id="baselineHeading">프로젝트 시작 기준</h2>
+          <p class="section-lead">신규 팀 실습 앱과 기존 Android 앱 통합은 시작 방식이 다릅니다.</p>
+          <div class="decision-grid">
+            <article class="decision-card recommended">
+              <h3>신규 팀 실습 앱</h3>
+              <p>Expo 프로젝트와 Development Build를 사용합니다. 파일 기반 라우팅, 개발 빌드, 네이티브 모듈과 출시 도구를 단계적으로 학습합니다.</p>
+            </article>
+            <article class="decision-card">
+              <h3>기존 Kotlin 앱에 일부 기능 추가</h3>
+              <p>React Native Community 구조를 기존 Gradle 프로젝트에 통합합니다. Android가 진입과 종료를 소유하고 React Native가 기능 내부 흐름을 담당합니다.</p>
+            </article>
+            <article class="decision-card">
+              <h3>Kotlin 기능 재사용</h3>
+              <p>TypeScript Codegen 명세와 Turbo Native Module을 사용합니다. 실제 네이티브 UI는 Fabric Native Component로 연결합니다.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="home-section" aria-labelledby="courseHeading">
+          <h2 id="courseHeading">전체 20개 단원</h2>
+          <p class="section-lead">1강부터 순서대로 공부하면 약 40시간의 이론과 8주 팀 프로젝트를 완성할 수 있습니다.</p>
+          <div class="course-grid" id="courseGrid"></div>
+        </section>
+      </section>
+
+      <article class="screen" id="lessonScreen" hidden>
+        <header class="lesson-header">
+          <span class="lesson-eyebrow" id="lessonEyebrow"></span>
+          <h1 class="lesson-title" id="lessonTitle" tabindex="-1"></h1>
+          <p class="lesson-summary" id="lessonSummary"></p>
+          <div class="lesson-meta" id="lessonMeta"></div>
+          <section class="outcome-box" aria-labelledby="outcomeHeading">
+            <h2 id="outcomeHeading">이 단원을 마치면 할 수 있는 것</h2>
+            <ul id="lessonOutcomes"></ul>
+          </section>
+        </header>
+
+        <section class="lesson-body" id="lessonBody" aria-label="단원 본문"></section>
+
+        <section class="quiz-panel" aria-labelledby="quizHeading">
+          <h2 id="quizHeading">바로 확인하는 문제</h2>
+          <p class="quiz-lead">본문에서 설명한 내용만 묻습니다. 답을 선택하면 이유가 즉시 표시됩니다.</p>
+          <div id="quizList"></div>
+          <div class="quiz-score" id="quizScore" aria-live="polite"></div>
+        </section>
+
+        <section class="sources-panel" aria-labelledby="sourcesHeading">
+          <h2 id="sourcesHeading">이 단원을 만든 공식 근거</h2>
+          <p class="source-note">본문을 공부한 뒤 세부 API와 버전 변경을 원문에서 확인합니다. 링크는 보충 자료이며 본문을 대신하지 않습니다.</p>
+          <ul class="source-list" id="sourceList"></ul>
+        </section>
+
+        <nav class="lesson-actions" aria-label="단원 이동과 완료 처리">
+          <button class="secondary-button previous" id="previousLesson" type="button">← 이전 단원</button>
+          <button class="primary-button complete-button" id="completeLesson" type="button" aria-pressed="false">학습 완료로 표시</button>
+          <button class="secondary-button next" id="nextLesson" type="button">다음 단원 →</button>
+        </nav>
+      </article>
+
+      <section class="error-state" id="loadError" hidden>
+        <h2>교과서 데이터를 불러오지 못했습니다.</h2>
+        <p>페이지를 새로고침해 주세요. 문제가 계속되면 GitHub Pages 배포 파일을 확인해야 합니다.</p>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>window.RN_COURSE = [];</script>
+  <script src="./course/part-1.js?v=20260726-2"></script>
+  <script src="./course/part-2.js?v=20260726-2"></script>
+  <script src="./course/part-3.js?v=20260726-2"></script>
+  <script src="./course/part-4.js?v=20260726-2"></script>
+  <script src="./course/part-5.js?v=20260726-2"></script>
+  <script src="./app.js?v=20260726-2"></script>
+</body>
+</html>
