@@ -1,0 +1,19 @@
+{
+  "name": "한능검 1급 훈련소",
+  "short_name": "한능검 1급",
+  "description": "한국사능력검정시험 심화 1급 대비 개념·문제·오답 복습 웹앱",
+  "lang": "ko-KR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f1e8",
+  "theme_color": "#f5f1e8",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
