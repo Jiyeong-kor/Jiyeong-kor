@@ -1,0 +1,171 @@
+name: 한능검 최종 교정
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/history-finalize.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 저장소 체크아웃
+        uses: actions/checkout@v4
+
+      - name: 연대기와 한국어 해설 교정
+        shell: bash
+        run: |
+          cat > /tmp/finalize_history.py <<'PY'
+          from pathlib import Path
+          import base64
+          import gzip
+          
+          root = Path('.')
+          history = root / 'docs' / 'history'
+          payload = history / 'payload'
+          parts = sorted(payload.glob('part-*.gz.b64'))
+          if not parts:
+              raise SystemExit('압축 문제은행 파일을 찾지 못했습니다.')
+          
+          encoded = ''.join(part.read_text(encoding='utf-8') for part in parts).replace('\n', '').replace('\r', '').replace(' ', '')
+          html = gzip.decompress(base64.b64decode(encoded)).decode('utf-8')
+          
+          replacements = [
+              (
+                  "  function hashString(value) {",
+                  """  function hasFinalConsonant(value) {
+              const characters = [...String(value ?? '')].reverse();
+              const last = characters.find(character => /[가-힣A-Za-z0-9]/.test(character));
+              if (!last) return false;
+              const code = last.charCodeAt(0);
+              if (code >= 0xAC00 && code <= 0xD7A3) return (code - 0xAC00) % 28 !== 0;
+              return false;
+            }
+          
+            function topic(value) {
+              const text = String(value ?? '');
+              return `${text}${hasFinalConsonant(text) ? '은' : '는'}`;
+            }
+          
+            function hashString(value) {""",
+              ),
+              (
+                  "      { text: fact.title, correct: true, explanation: `${fact.title}은(는) 제시된 두 단서에 모두 해당합니다.` },",
+                  "      { text: fact.title, correct: true, explanation: `${topic(fact.title)} 제시된 두 단서에 모두 해당합니다.` },",
+              ),
+              (
+                  "      coreExplanation: `${fact.title}은(는) ${fact.summary}`",
+                  "      coreExplanation: `${topic(fact.title)} ${fact.summary}`",
+              ),
+              (
+                  "      coreExplanation: `문제는 옳지 않은 설명을 묻습니다. ${outsiderClue}은(는) ${outsider.title}의 내용입니다.`",
+                  "      coreExplanation: `문제는 옳지 않은 설명을 묻습니다. ${topic(`“${outsiderClue}”`)} ${outsider.title}의 내용입니다.`",
+              ),
+              (
+                  "      { text: fact.era, correct: true, explanation: `${fact.title}은(는) ${fact.era}에 해당합니다.` },",
+                  "      { text: fact.era, correct: true, explanation: `${topic(fact.title)} ${fact.era}에 해당합니다.` },",
+              ),
+              (
+                  "      coreExplanation: `${fact.title}은(는) ${fact.era}의 내용입니다.`",
+                  "      coreExplanation: `${topic(fact.title)} ${fact.era}의 내용입니다.`",
+              ),
+              (
+                  """    const earlier = HISTORY_FACTS.filter(candidate => candidate.order < fact.order);
+              const later = HISTORY_FACTS.filter(candidate => candidate.order > fact.order);""",
+                  """    const earlier = HISTORY_FACTS.filter(candidate => candidate.year < fact.year);
+              const later = HISTORY_FACTS.filter(candidate => candidate.year > fact.year);""",
+              ),
+              (
+                  """      { text: correct.title, correct: true, explanation: `${correct.title}은(는) ${fact.title}보다 ${direction === 'before' ? '먼저' : '뒤에'} 전개되었습니다.` },
+                ...wrong.map(item => ({ text: item.title, correct: false, explanation: `${item.title}은(는) ${fact.title}보다 ${direction === 'before' ? '뒤에' : '먼저'} 전개되었습니다.` }))""",
+                  """      { text: correct.title, correct: true, explanation: `${topic(correct.title)} ${fact.title}보다 ${direction === 'before' ? '먼저' : '뒤에'} 전개되었습니다.` },
+                ...wrong.map(item => ({ text: item.title, correct: false, explanation: `${topic(item.title)} ${fact.title}보다 ${direction === 'before' ? '뒤에' : '먼저'} 전개되었습니다.` }))""",
+              ),
+              (
+                  """    const sameEra = HISTORY_FACTS.filter(item => item.era === fact.era);
+              const selected = uniqueBy([fact, ...shuffled(sameEra.filter(item => item.id !== fact.id), `sequence-${fact.id}-${variant}`)], item => item.id).slice(0, 4);
+              if (selected.length < 4) return makeChronologyQuestion(fact, variant, 'before');
+              const sortedFacts = [...selected].sort((a, b) => a.order - b.order);""",
+                  """    const sameEra = HISTORY_FACTS.filter(item => item.era === fact.era && item.id !== fact.id);
+              const selected = [fact];
+              const selectedYears = new Set([fact.year]);
+              shuffled(sameEra, `sequence-${fact.id}-${variant}`).forEach(item => {
+                if (selected.length >= 4 || selectedYears.has(item.year)) return;
+                selected.push(item);
+                selectedYears.add(item.year);
+              });
+              if (selected.length < 4) return makeChronologyQuestion(fact, variant, 'before');
+              const sortedFacts = [...selected].sort((a, b) => a.year - b.year || a.order - b.order);""",
+              ),
+              (
+                  "      ...distractors.map(item => ({ text: item.title, correct: false, explanation: `${item.title}은(는) “${item.summary}”에 해당합니다.` }))",
+                  "      ...distractors.map(item => ({ text: item.title, correct: false, explanation: `${topic(item.title)} “${item.summary}”에 해당합니다.` }))",
+              ),
+              (
+                  '    "id": "manchu_invasions",\n    "era": "조선 전기",',
+                  '    "id": "manchu_invasions",\n    "era": "조선 후기",',
+              ),
+              (
+                  '    "id": "gwanghae_injo",\n    "era": "조선 전기",',
+                  '    "id": "gwanghae_injo",\n    "era": "조선 후기",',
+              ),
+          ]
+          
+          for index, (before, after) in enumerate(replacements, start=1):
+              count = html.count(before)
+              if count == 0 and html.count(after) == 1:
+                  continue
+              if count != 1:
+                  raise SystemExit(f'교정 항목 {index}의 대상 수가 올바르지 않습니다: {count}')
+              html = html.replace(before, after, 1)
+          
+          for forbidden in ['은(는)', 'candidate.order < fact.order', 'candidate.order > fact.order']:
+              if forbidden in html:
+                  raise SystemExit(f'교정되지 않은 표현이 남아 있습니다: {forbidden}')
+          for required in [
+              'function topic(value)',
+              'candidate.year < fact.year',
+              'candidate.year > fact.year',
+              '"id": "manchu_invasions",\n    "era": "조선 후기"',
+              '"id": "gwanghae_injo",\n    "era": "조선 후기"',
+          ]:
+              if required not in html:
+                  raise SystemExit(f'필수 교정 결과가 없습니다: {required}')
+          
+          new_encoded = base64.b64encode(gzip.compress(html.encode('utf-8'), compresslevel=9, mtime=0)).decode('ascii')
+          chunks = [new_encoded[index:index + 14000] for index in range(0, len(new_encoded), 14000)]
+          for old_part in parts:
+              old_part.unlink()
+          for index, chunk in enumerate(chunks, start=1):
+              (payload / f'part-{index:02d}.gz.b64').write_text(chunk + '\n', encoding='utf-8')
+          
+          loader = (history / 'index.html').read_text(encoding='utf-8').replace('20260726-1', '20260726-2')
+          service_worker = (history / 'sw.js').read_text(encoding='utf-8').replace('20260726-1', '20260726-2')
+          (history / 'index.html').write_text(loader, encoding='utf-8')
+          (history / 'sw.js').write_text(service_worker, encoding='utf-8')
+          
+          print(f'교정 완료: {len(chunks)}개 조각, HTML {len(html)}자, Base64 {len(new_encoded)}자')
+          PY
+          python /tmp/finalize_history.py
+
+      - name: 문제은행 구조 검증
+        run: node scripts/verify_history_site.mjs
+
+      - name: 교정 결과 커밋
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "이미 교정된 상태입니다."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/history/index.html docs/history/sw.js docs/history/payload
+          git commit -m "fix: 한능검 연대기와 해설 데이터 수정"
+          git push
