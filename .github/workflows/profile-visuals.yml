@@ -6,6 +6,8 @@ on:
     paths:
       - .github/workflows/profile-visuals.yml
       - scripts/generate_profile_activity.py
+      - scripts/render_profile_assets.py
+      - assets/profile/pink/**
   schedule:
     - cron: '17 1 * * *'
   workflow_dispatch:
@@ -30,6 +32,23 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Pretendard 폰트 설치
+        run: |
+          mkdir -p "$HOME/.local/share/fonts"
+          curl --fail --location --retry 3 \
+            https://raw.githubusercontent.com/orioncactus/pretendard/main/packages/pretendard/dist/public/static/Pretendard-Bold.otf \
+            --output "$HOME/.local/share/fonts/Pretendard-Bold.otf"
+          curl --fail --location --retry 3 \
+            https://raw.githubusercontent.com/orioncactus/pretendard/main/packages/pretendard/dist/public/static/Pretendard-Black.otf \
+            --output "$HOME/.local/share/fonts/Pretendard-Black.otf"
+          fc-cache -f "$HOME/.local/share/fonts"
+          fc-match Pretendard
+
+      - name: Pretendard 적용 배너와 소개 이미지 생성
+        run: |
+          python -m pip install 'CairoSVG==2.7.1'
+          python scripts/render_profile_assets.py
+
       - name: 실제 GitHub 기여 기록으로 활동 그래프 생성
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,6 +64,9 @@ jobs:
 
       - name: 생성된 결과 검사
         run: |
+          test -s dist/banner.png
+          test -s dist/banner-mobile.png
+          test -s dist/about.png
           test -s dist/activity.svg
           test -s dist/snake.svg
           python - <<'PY'
