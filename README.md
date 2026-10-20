@@ -1,11 +1,17 @@
 <picture>
-  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/main/assets/profile/header-mobile.png">
-  <img src="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/main/assets/profile/header.png" alt="정지영 | 신입 안드로이드 앱 개발자" width="840">
+  <source media="(prefers-color-scheme: dark) and (max-width: 600px)" srcset="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/main/assets/profile/header-mobile-dark.png?v=2">
+  <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/main/assets/profile/header-mobile.png?v=2">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/main/assets/profile/header-dark.png?v=2">
+  <img src="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/main/assets/profile/header.png?v=2" alt="정지영 | 신입 안드로이드 앱 개발자" width="840">
 </picture>
 
 코틀린과 Jetpack Compose로 안드로이드 앱을 만듭니다. 팀원들과 분리배출 앱 ‘여기버려’를 만들어 Google Play에 출시했고, 지금도 검색과 즐겨찾기 기능을 개선하고 있습니다.
 
-**[포트폴리오](https://androidportfolio.jeongjiyeong486.workers.dev/)** &nbsp; / &nbsp; **[이메일](mailto:jeongjiyeong486@gmail.com)**
+<p align="center">
+  <a href="https://androidportfolio.jeongjiyeong486.workers.dev/"><strong>포트폴리오</strong></a>
+  &nbsp; / &nbsp;
+  <a href="mailto:jeongjiyeong486@gmail.com"><strong>이메일</strong></a>
+</p>
 
 ## 프로젝트
 
