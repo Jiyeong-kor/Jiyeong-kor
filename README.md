@@ -1,7 +1,7 @@
 <div align="center">
   <picture>
-    <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/main/assets/profile/pink/banner-mobile.svg" />
-    <img src="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/main/assets/profile/pink/banner.svg" alt="정지영의 GitHub 프로필. 분홍색 테마의 안드로이드 개발자 배너" width="100%" />
+    <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/profile-assets/banner-mobile.png" />
+    <img src="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/profile-assets/banner.png" alt="정지영의 GitHub 프로필. 분홍색 테마의 안드로이드 개발자 배너" width="100%" />
   </picture>
 
   <h1>Hey there, I'm Jiyeong!</h1>
@@ -34,7 +34,7 @@
       <p><strong>현재 관심사</strong> · Kotlin · Jetpack Compose · 데이터 흐름 · 접근성 · 테스트</p>
     </td>
     <td width="35%" align="center" valign="middle">
-      <img src="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/main/assets/profile/pink/about.svg" width="100%" alt="분홍색 안드로이드 앱 화면과 코드 카드 일러스트" />
+      <img src="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/profile-assets/about.png" width="100%" alt="분홍색 안드로이드 앱 화면과 코드 카드 일러스트" />
     </td>
   </tr>
 </table>
