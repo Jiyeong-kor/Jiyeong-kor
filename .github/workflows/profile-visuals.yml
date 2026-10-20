@@ -1,0 +1,65 @@
+name: 분홍 프로필 활동 이미지 갱신
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/profile-visuals.yml
+      - scripts/generate_profile_activity.py
+  schedule:
+    - cron: '17 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: profile-visuals
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 소스 확인
+        uses: actions/checkout@v4
+
+      - name: Python 설정
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: 실제 GitHub 기여 기록으로 활동 그래프 생성
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/generate_profile_activity.py
+
+      - name: 실제 GitHub 기여 기록으로 분홍색 Snake 생성
+        uses: Platane/snk/svg-only@v3
+        with:
+          github_user_name: Jiyeong-kor
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          outputs: |
+            dist/snake.svg?color_snake=#FF69B4&color_dots=#FFF7FB,#FCE4EF,#F8BBD0,#EF93C4,#FF69B4
+
+      - name: 생성된 결과 검사
+        run: |
+          test -s dist/activity.svg
+          test -s dist/snake.svg
+          python - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree
+          for p in (Path('dist/activity.svg'), Path('dist/snake.svg')):
+              ElementTree.parse(p)
+              print('XML 확인:', p)
+          PY
+
+      - name: 프로필 전용 출력 브랜치 게시
+        uses: crazy-max/ghaction-github-pages@v4
+        with:
+          target_branch: profile-assets
+          build_dir: dist
+          commit_message: 'chore: GitHub 기여 이미지 자동 갱신'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
