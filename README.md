@@ -8,7 +8,7 @@
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=19&duration=3400&pause=1100&color=9B67BC&center=true&vCenter=true&repeat=true&width=680&height=52&lines=Building+Android+apps+with+Kotlin;Learning+through+real+projects;Small+improvements%2C+thoughtfully+made" alt="Kotlin으로 안드로이드 앱을 만들고 프로젝트를 통해 학습합니다" />
 
   <p>
-    <img src="https://komarev.com/ghpvc/?username=Jiyeong-kor&label=Profile%20views&color=CC9CE3&style=for-the-badge" alt="프로필 조회 배지" />
+    <img src="https://komarev.com/ghpvc/?username=Jiyeong-kor&label=Profile%20views&color=cc9ce3&style=for-the-badge" alt="프로필 조회 배지" />
   </p>
 
   <p>
