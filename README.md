@@ -29,9 +29,9 @@
   <tr>
     <td width="65%" align="center" valign="middle">
       <p><strong>코틀린으로 안드로이드 앱을 만드는 정지영입니다.</strong></p>
-      <p>사용자가 겪는 문제를 코드와 데이터에서 찾아 개선하는 일에 관심이 있습니다. 팀 프로젝트에서는 분리배출 안내 앱 <strong>‘여기버려’</strong>의 품목 검색과 즐겨찾기 기능을 맡았고, Google Play 출시에 참여했습니다.</p>
-      <p>개인 프로젝트 <strong>‘FitFlow’</strong>에서는 러닝 기록과 운동 자세 코칭 기능을 구현했습니다. 앱의 상태 관리, 로컬 데이터 저장, 동기화 오류 처리와 테스트를 꾸준히 다루고 있습니다.</p>
-      <p><strong>현재 관심사</strong> / Kotlin / Jetpack Compose / 데이터 흐름 / 접근성 / 테스트</p>
+      <p>분리배출 안내 앱 <strong>‘여기버려’</strong>의 품목 검색과 즐겨찾기를 구현하고 Google Play 출시에 참여했습니다.</p>
+      <p>개인 프로젝트 <strong>‘FitFlow’</strong>에서는 러닝 기록과 운동 자세 코칭 기능을 만들었습니다.</p>
+      <p><strong>현재 관심사</strong><br />Kotlin / Jetpack Compose<br />데이터 흐름 / 접근성 / 테스트</p>
     </td>
     <td width="35%" align="center" valign="middle">
       <img src="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/profile-assets/about.png" width="100%" alt="분홍색 안드로이드 앱 화면과 코드 카드 일러스트" />
