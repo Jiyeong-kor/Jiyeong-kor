@@ -1,9 +1,4 @@
 <div align="center">
-  <picture>
-    <source media="(max-width: 600px)" srcset="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/6e5551eec6272add250b3fbbdba1f1624e7d6cec/banner-mobile.png" />
-    <img src="https://raw.githubusercontent.com/Jiyeong-kor/Jiyeong-kor/6e5551eec6272add250b3fbbdba1f1624e7d6cec/banner.png" alt="정지영의 GitHub 프로필. 분홍색 테마의 안드로이드 개발자 배너" width="100%" />
-  </picture>
-
   <h1>Hey there, I'm Jiyoung Jung!</h1>
   <p><strong>정지영 / 안드로이드 앱 개발자</strong></p>
 
