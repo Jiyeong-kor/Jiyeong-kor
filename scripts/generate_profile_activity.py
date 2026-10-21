@@ -18,10 +18,10 @@ import cairosvg
 
 API_URL = "https://api.github.com/graphql"
 LOGIN = "Jiyeong-kor"
-PINK = "#FF69B4"
-DARK = "#96436F"
-SOFT = "#F8BBD0"
-BG = "#FFF7FB"
+PURPLE = "#9B67BC"
+DARK = "#70428A"
+SOFT = "#E4C8F1"
+BG = "#FBF7FE"
 
 QUERY = """query($login: String!) {
   user(login: $login) {
@@ -74,13 +74,13 @@ def render_activity(weeks: list[dict]) -> str:
     line = " ".join(("M" if i == 0 else "L") + f"{px:.1f},{py:.1f}" for i, (px, py) in enumerate(coords))
     area = line + f" L {coords[-1][0]:.1f},{top+area_h:.1f} L {coords[0][0]:.1f},{top+area_h:.1f} Z"
     grid = "".join(
-        f'<line x1="{left}" y1="{y(y_cap*k/4):.1f}" x2="{width-right}" y2="{y(y_cap*k/4):.1f}" stroke="#F5D1E2" stroke-width="1"/>'
-        f'<text x="{left-11}" y="{y(y_cap*k/4)+4:.1f}" text-anchor="end" fill="#A97391" font-size="12">{y_cap*k/4:g}</text>'
+        f'<line x1="{left}" y1="{y(y_cap*k/4):.1f}" x2="{width-right}" y2="{y(y_cap*k/4):.1f}" stroke="#EADCF2" stroke-width="1"/>'
+        f'<text x="{left-11}" y="{y(y_cap*k/4)+4:.1f}" text-anchor="end" fill="#80628F" font-size="12">{y_cap*k/4:g}</text>'
         for k in range(5)
     )
-    dots = "".join(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.5" fill="{PINK}" stroke="white" stroke-width="1.4"/>' for px, py in coords)
+    dots = "".join(f'<circle cx="{px:.1f}" cy="{py:.1f}" r="3.5" fill="{PURPLE}" stroke="white" stroke-width="1.4"/>' for px, py in coords)
     labels = "".join(
-        f'<text x="{x(i):.1f}" y="{height-26}" text-anchor="middle" font-size="12" fill="#A97391">{escape(weeks[i]["contributionDays"][0]["date"][5:7])}/{escape(weeks[i]["contributionDays"][0]["date"][8:10])}</text>'
+        f'<text x="{x(i):.1f}" y="{height-26}" text-anchor="middle" font-size="12" fill="#80628F">{escape(weeks[i]["contributionDays"][0]["date"][5:7])}/{escape(weeks[i]["contributionDays"][0]["date"][8:10])}</text>'
         for i in range(0, 26, 5) if weeks[i].get("contributionDays")
     )
     total = sum(values)
@@ -92,10 +92,10 @@ def render_activity(weeks: list[dict]) -> str:
   <rect x="1" y="1" width="{width-2}" height="{height-2}" rx="24" fill="{BG}" stroke="{SOFT}" stroke-width="2"/>
   <g font-family="Pretendard, Noto Sans, sans-serif">
     <text x="37" y="47" fill="{DARK}" font-size="22" font-weight="800">Contribution Activity</text>
-    <text x="38" y="72" fill="#B47197" font-size="13">Actual GitHub contributions / Last 26 weeks / {total} total</text>
+    <text x="38" y="72" fill="#80628F" font-size="13">Actual GitHub contributions / Last 26 weeks / {total} total</text>
     {grid}
     <path d="{area}" fill="url(#area)"/>
-    <path d="{line}" fill="none" stroke="{PINK}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="{line}" fill="none" stroke="{PURPLE}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
     {dots}
     {labels}
   </g>
@@ -107,11 +107,11 @@ def main() -> None:
     if not token:
         raise SystemExit("GITHUB_TOKEN이 없어 실제 기여 자료를 가져올 수 없습니다.")
     svg = render_activity(load_calendar(token))
-    path = Path("dist/activity.svg")
+    path = Path("dist/activity-purple.svg")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(svg, encoding="utf-8")
-    cairosvg.svg2png(bytestring=svg.encode("utf-8"), write_to="dist/activity.png", scale=2)
-    print(f"생성 완료: {path}, dist/activity.png")
+    cairosvg.svg2png(bytestring=svg.encode("utf-8"), write_to="dist/activity-purple.png", scale=2)
+    print(f"생성 완료: {path}, dist/activity-purple.png")
 
 
 if __name__ == "__main__":
