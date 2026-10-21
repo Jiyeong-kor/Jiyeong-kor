@@ -14,6 +14,8 @@ from pathlib import Path
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
+import cairosvg
+
 API_URL = "https://api.github.com/graphql"
 LOGIN = "Jiyeong-kor"
 PINK = "#FF69B4"
@@ -65,7 +67,7 @@ def render_activity(weeks: list[dict]) -> str:
     width, height = 920, 298
     left, right, top, bottom = 69, 34, 100, 55
     area_w, area_h = width - left - right, height - top - bottom
-    y_cap = max(4, max(values))
+    y_cap = max(4, ((max(values) + 3) // 4) * 4)
     x = lambda i: left + (area_w * i / (len(values) - 1))
     y = lambda v: top + area_h - (area_h * v / y_cap)
     coords = [(x(i), y(v)) for i, v in enumerate(values)]
@@ -84,13 +86,13 @@ def render_activity(weeks: list[dict]) -> str:
     total = sum(values)
     generated = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-label="GitHub 주간 기여 횟수, 지난 26주 총 {total}회">
-  <title>GitHub Activity · 최근 26주</title>
+  <title>GitHub Activity / 최근 26주</title>
   <desc>GitHub GraphQL API에서 가져온 실제 날짜별 기여 횟수를 주간으로 합산했습니다. {generated} 기준</desc>
   <defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop stop-color="{SOFT}" stop-opacity=".82"/><stop offset="1" stop-color="{BG}" stop-opacity=".16"/></linearGradient></defs>
   <rect x="1" y="1" width="{width-2}" height="{height-2}" rx="24" fill="{BG}" stroke="{SOFT}" stroke-width="2"/>
   <g font-family="Pretendard, Noto Sans, sans-serif">
     <text x="37" y="47" fill="{DARK}" font-size="22" font-weight="800">Contribution Activity</text>
-    <text x="38" y="72" fill="#B47197" font-size="13">Actual GitHub contributions · Last 26 weeks · {total} total</text>
+    <text x="38" y="72" fill="#B47197" font-size="13">Actual GitHub contributions / Last 26 weeks / {total} total</text>
     {grid}
     <path d="{area}" fill="url(#area)"/>
     <path d="{line}" fill="none" stroke="{PINK}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -108,7 +110,8 @@ def main() -> None:
     path = Path("dist/activity.svg")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(svg, encoding="utf-8")
-    print(f"생성 완료: {path}")
+    cairosvg.svg2png(bytestring=svg.encode("utf-8"), write_to="dist/activity.png", scale=2)
+    print(f"생성 완료: {path}, dist/activity.png")
 
 
 if __name__ == "__main__":

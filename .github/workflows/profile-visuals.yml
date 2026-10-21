@@ -68,6 +68,7 @@ jobs:
           test -s dist/banner-mobile.png
           test -s dist/about.png
           test -s dist/activity.svg
+          test -s dist/activity.png
           test -s dist/snake.svg
           python - <<'PY'
           from pathlib import Path
