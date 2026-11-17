@@ -8,7 +8,9 @@
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=500&size=19&duration=3400&pause=1100&color=9B67BC&center=true&vCenter=true&repeat=true&width=680&height=52&lines=Building+Android+apps+with+Kotlin;Learning+through+real+projects;Small+improvements%2C+thoughtfully+made" alt="Kotlin으로 안드로이드 앱을 만들고 프로젝트를 통해 학습합니다" />
 
   <p>
-    <img src="https://hitscounter.dev/api/hit?url=https%3A%2F%2Fgithub.com%2FJiyeong-kor&amp;label=Profile%20views%20%28today%20%2F%20total%29&amp;color=%23cc9ce3&amp;style=for-the-badge&amp;tz=Asia%2FSeoul" alt="프로필 조회수: 오늘 / 누적, 한국 시간 기준" title="한국 시간 기준 오늘 조회수 / 배지 교체 후 누적 조회수" />
+    <!-- profile-views-today:start -->
+    <img src="https://komarev.com/ghpvc/?username=Jiyeong-kor-daily-20261118&amp;label=Profile%20views%20today&amp;color=cc9ce3&amp;style=for-the-badge" alt="오늘 프로필 조회수" title="한국 시간 2026-11-18의 프로필 조회수" />
+    <!-- profile-views-today:end -->
   </p>
 
   <p>
