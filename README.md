@@ -9,7 +9,7 @@
 
   <p>
     <!-- profile-views-today:start -->
-    <img src="https://komarev.com/ghpvc/?username=Jiyeong-kor-daily-20261119&amp;label=Profile%20views%20today&amp;color=cc9ce3&amp;style=for-the-badge" alt="오늘 프로필 조회수" title="한국 시간 2026-11-19의 프로필 조회수" />
+    <img src="https://komarev.com/ghpvc/?username=Jiyeong-kor-daily-20261120&amp;label=Profile%20views%20today&amp;color=cc9ce3&amp;style=for-the-badge" alt="오늘 프로필 조회수" title="한국 시간 2026-11-20의 프로필 조회수" />
     <!-- profile-views-today:end -->
   </p>
 
